@@ -1,0 +1,88 @@
+# Binarios Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+
+# Test binaries
+*.test
+
+# Output del compilador Go
+*.o
+*.a
+
+# Coverage reports
+*.out
+*.html
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Base de datos local
+*.db
+*.sqlite
+
+# GoLand / IntelliJ
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+.idea/shelf/
+.idea/aws.xml
+.idea/contentModel.xml
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+.idea/gradle.xml
+.idea/libraries
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/modules.xml
+.idea/*.iml
+.idea/modules
+
+# Keep run configurations (útiles para el equipo)
+!.idea/runConfigurations/
+
+# Docker volumes y cache
+docker/data/
+docker/logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.sql.bak
+
+# Go workspace
+go.work
+go.work.sum
+
+# Dependency directories
+vendor/
+
+# Output directory
+dist/
+build/
+
+# Archivos específicos del proyecto a excluir
+docker-compose.yml
+CLAUDE.md
+ejercicios/
+docs/
+docker/
