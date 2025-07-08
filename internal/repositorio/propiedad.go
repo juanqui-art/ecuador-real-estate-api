@@ -2,6 +2,7 @@ package repositorio
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -34,17 +35,38 @@ func NuevoPropiedadRepositoryPostgres(db *sql.DB) *PropiedadRepositoryPostgres {
 
 // Crear inserta una nueva propiedad en la base de datos
 func (r *PropiedadRepositoryPostgres) Crear(propiedad *dominio.Propiedad) error {
-	// Query SQL para insertar una propiedad
+	// Convertir slices a JSON para almacenar en JSONB
+	imagenesJSON, err := json.Marshal(propiedad.Imagenes)
+	if err != nil {
+		return fmt.Errorf("error al convertir imágenes a JSON: %w", err)
+	}
+
+	tagsJSON, err := json.Marshal(propiedad.Tags)
+	if err != nil {
+		return fmt.Errorf("error al convertir tags a JSON: %w", err)
+	}
+
+	// Query SQL para insertar una propiedad con todos los campos
 	query := `
 		INSERT INTO propiedades (
 			id, slug, titulo, descripcion, precio, provincia, ciudad, 
 			sector, direccion, tipo, estado, dormitorios, banos, 
-			area_m2, fecha_creacion, fecha_actualizacion
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+			area_m2, fecha_creacion, fecha_actualizacion,
+			latitud, longitud, precision_ubicacion,
+			imagen_principal, imagenes, video_tour, tour_360,
+			precio_alquiler, gastos_comunes, precio_m2,
+			ano_construccion, pisos, estado_propiedad, amoblada,
+			garage, piscina, jardin, terraza, balcon, seguridad, ascensor, aire_acondicionado,
+			tags, destacada, visitas_contador, inmobiliaria_id
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+			$17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+			$31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42
+		)
 	`
 
-	// Ejecutar la query
-	_, err := r.db.Exec(
+	// Ejecutar la query con todos los campos
+	_, err = r.db.Exec(
 		query,
 		propiedad.ID,
 		propiedad.Slug,
@@ -62,6 +84,38 @@ func (r *PropiedadRepositoryPostgres) Crear(propiedad *dominio.Propiedad) error 
 		propiedad.AreaM2,
 		propiedad.FechaCreacion,
 		propiedad.FechaActualizacion,
+		// Geolocalización
+		propiedad.Latitud,
+		propiedad.Longitud,
+		propiedad.PrecisionUbicacion,
+		// Imágenes y media
+		propiedad.ImagenPrincipal,
+		string(imagenesJSON),
+		propiedad.VideoTour,
+		propiedad.Tour360,
+		// Precios adicionales
+		propiedad.PrecioAlquiler,
+		propiedad.GastosComunes,
+		propiedad.PrecioM2,
+		// Características
+		propiedad.AnoConstruccion,
+		propiedad.Pisos,
+		propiedad.EstadoPropiedad,
+		propiedad.Amoblada,
+		// Amenidades
+		propiedad.Garage,
+		propiedad.Piscina,
+		propiedad.Jardin,
+		propiedad.Terraza,
+		propiedad.Balcon,
+		propiedad.Seguridad,
+		propiedad.Ascensor,
+		propiedad.AireAcondicionado,
+		// Marketing y SEO
+		string(tagsJSON),
+		propiedad.Destacada,
+		propiedad.VisitasContador,
+		propiedad.InmobiliariaID,
 	)
 
 	if err != nil {
@@ -77,12 +131,19 @@ func (r *PropiedadRepositoryPostgres) ObtenerPorID(id string) (*dominio.Propieda
 	query := `
 		SELECT id, slug, titulo, descripcion, precio, provincia, ciudad, 
 			   sector, direccion, tipo, estado, dormitorios, banos, 
-			   area_m2, fecha_creacion, fecha_actualizacion
+			   area_m2, fecha_creacion, fecha_actualizacion,
+			   latitud, longitud, precision_ubicacion,
+			   imagen_principal, imagenes, video_tour, tour_360,
+			   precio_alquiler, gastos_comunes, precio_m2,
+			   ano_construccion, pisos, estado_propiedad, amoblada,
+			   garage, piscina, jardin, terraza, balcon, seguridad, ascensor, aire_acondicionado,
+			   tags, destacada, visitas_contador, inmobiliaria_id
 		FROM propiedades 
 		WHERE id = $1
 	`
 
 	var propiedad dominio.Propiedad
+	var imagenesJSON, tagsJSON string
 
 	// QueryRow ejecuta la query y devuelve una fila
 	err := r.db.QueryRow(query, id).Scan(
@@ -102,6 +163,38 @@ func (r *PropiedadRepositoryPostgres) ObtenerPorID(id string) (*dominio.Propieda
 		&propiedad.AreaM2,
 		&propiedad.FechaCreacion,
 		&propiedad.FechaActualizacion,
+		// Geolocalización
+		&propiedad.Latitud,
+		&propiedad.Longitud,
+		&propiedad.PrecisionUbicacion,
+		// Imágenes y media
+		&propiedad.ImagenPrincipal,
+		&imagenesJSON,
+		&propiedad.VideoTour,
+		&propiedad.Tour360,
+		// Precios adicionales
+		&propiedad.PrecioAlquiler,
+		&propiedad.GastosComunes,
+		&propiedad.PrecioM2,
+		// Características
+		&propiedad.AnoConstruccion,
+		&propiedad.Pisos,
+		&propiedad.EstadoPropiedad,
+		&propiedad.Amoblada,
+		// Amenidades
+		&propiedad.Garage,
+		&propiedad.Piscina,
+		&propiedad.Jardin,
+		&propiedad.Terraza,
+		&propiedad.Balcon,
+		&propiedad.Seguridad,
+		&propiedad.Ascensor,
+		&propiedad.AireAcondicionado,
+		// Marketing y SEO
+		&tagsJSON,
+		&propiedad.Destacada,
+		&propiedad.VisitasContador,
+		&propiedad.InmobiliariaID,
 	)
 
 	if err != nil {
@@ -109,6 +202,21 @@ func (r *PropiedadRepositoryPostgres) ObtenerPorID(id string) (*dominio.Propieda
 			return nil, fmt.Errorf("propiedad no encontrada: %s", id)
 		}
 		return nil, fmt.Errorf("error al obtener propiedad: %w", err)
+	}
+
+	// Convertir JSON de vuelta a slices
+	if imagenesJSON != "" {
+		err = json.Unmarshal([]byte(imagenesJSON), &propiedad.Imagenes)
+		if err != nil {
+			return nil, fmt.Errorf("error al convertir imágenes desde JSON: %w", err)
+		}
+	}
+
+	if tagsJSON != "" {
+		err = json.Unmarshal([]byte(tagsJSON), &propiedad.Tags)
+		if err != nil {
+			return nil, fmt.Errorf("error al convertir tags desde JSON: %w", err)
+		}
 	}
 
 	return &propiedad, nil
@@ -119,13 +227,20 @@ func (r *PropiedadRepositoryPostgres) ObtenerPorSlug(slug string) (*dominio.Prop
 	query := `
 		SELECT id, slug, titulo, descripcion, precio, provincia, ciudad, 
 			   sector, direccion, tipo, estado, dormitorios, banos, 
-			   area_m2, fecha_creacion, fecha_actualizacion
+			   area_m2, fecha_creacion, fecha_actualizacion,
+			   latitud, longitud, precision_ubicacion,
+			   imagen_principal, imagenes, video_tour, tour_360,
+			   precio_alquiler, gastos_comunes, precio_m2,
+			   ano_construccion, pisos, estado_propiedad, amoblada,
+			   garage, piscina, jardin, terraza, balcon, seguridad, ascensor, aire_acondicionado,
+			   tags, destacada, visitas_contador, inmobiliaria_id
 		FROM propiedades 
 		WHERE slug = $1
 	`
 
 	var propiedad dominio.Propiedad
-	
+	var imagenesJSON, tagsJSON string
+
 	// QueryRow ejecuta la query y devuelve una fila
 	err := r.db.QueryRow(query, slug).Scan(
 		&propiedad.ID,
@@ -144,6 +259,38 @@ func (r *PropiedadRepositoryPostgres) ObtenerPorSlug(slug string) (*dominio.Prop
 		&propiedad.AreaM2,
 		&propiedad.FechaCreacion,
 		&propiedad.FechaActualizacion,
+		// Geolocalización
+		&propiedad.Latitud,
+		&propiedad.Longitud,
+		&propiedad.PrecisionUbicacion,
+		// Imágenes y media
+		&propiedad.ImagenPrincipal,
+		&imagenesJSON,
+		&propiedad.VideoTour,
+		&propiedad.Tour360,
+		// Precios adicionales
+		&propiedad.PrecioAlquiler,
+		&propiedad.GastosComunes,
+		&propiedad.PrecioM2,
+		// Características
+		&propiedad.AnoConstruccion,
+		&propiedad.Pisos,
+		&propiedad.EstadoPropiedad,
+		&propiedad.Amoblada,
+		// Amenidades
+		&propiedad.Garage,
+		&propiedad.Piscina,
+		&propiedad.Jardin,
+		&propiedad.Terraza,
+		&propiedad.Balcon,
+		&propiedad.Seguridad,
+		&propiedad.Ascensor,
+		&propiedad.AireAcondicionado,
+		// Marketing y SEO
+		&tagsJSON,
+		&propiedad.Destacada,
+		&propiedad.VisitasContador,
+		&propiedad.InmobiliariaID,
 	)
 
 	if err != nil {
@@ -153,17 +300,33 @@ func (r *PropiedadRepositoryPostgres) ObtenerPorSlug(slug string) (*dominio.Prop
 		return nil, fmt.Errorf("error al obtener propiedad por slug: %w", err)
 	}
 
+	// Convertir JSON de vuelta a slices
+	if imagenesJSON != "" {
+		err = json.Unmarshal([]byte(imagenesJSON), &propiedad.Imagenes)
+		if err != nil {
+			return nil, fmt.Errorf("error al convertir imágenes desde JSON: %w", err)
+		}
+	}
+
+	if tagsJSON != "" {
+		err = json.Unmarshal([]byte(tagsJSON), &propiedad.Tags)
+		if err != nil {
+			return nil, fmt.Errorf("error al convertir tags desde JSON: %w", err)
+		}
+	}
+
 	return &propiedad, nil
 }
 
-// ObtenerTodas devuelve todas las propiedades
+// ObtenerTodas devuelve todas las propiedades (versión ligera para listados)
 func (r *PropiedadRepositoryPostgres) ObtenerTodas() ([]dominio.Propiedad, error) {
 	query := `
 		SELECT id, slug, titulo, descripcion, precio, provincia, ciudad, 
 			   sector, direccion, tipo, estado, dormitorios, banos, 
-			   area_m2, fecha_creacion, fecha_actualizacion
+			   area_m2, fecha_creacion, fecha_actualizacion,
+			   imagen_principal, tags, destacada, visitas_contador, inmobiliaria_id
 		FROM propiedades 
-		ORDER BY fecha_creacion DESC
+		ORDER BY destacada DESC, fecha_creacion DESC
 	`
 
 	// Query ejecuta la consulta y devuelve múltiples filas
@@ -178,6 +341,8 @@ func (r *PropiedadRepositoryPostgres) ObtenerTodas() ([]dominio.Propiedad, error
 	// Iterar sobre todas las filas
 	for rows.Next() {
 		var propiedad dominio.Propiedad
+		var tagsJSON string
+
 		err := rows.Scan(
 			&propiedad.ID,
 			&propiedad.Slug,
@@ -195,10 +360,25 @@ func (r *PropiedadRepositoryPostgres) ObtenerTodas() ([]dominio.Propiedad, error
 			&propiedad.AreaM2,
 			&propiedad.FechaCreacion,
 			&propiedad.FechaActualizacion,
+			&propiedad.ImagenPrincipal,
+			&tagsJSON,
+			&propiedad.Destacada,
+			&propiedad.VisitasContador,
+			&propiedad.InmobiliariaID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error al leer propiedad: %w", err)
 		}
+
+		// Convertir tags JSON
+		if tagsJSON != "" {
+			err = json.Unmarshal([]byte(tagsJSON), &propiedad.Tags)
+			if err != nil {
+				// Si falla la conversión, continuar sin tags
+				propiedad.Tags = []string{}
+			}
+		}
+
 		propiedades = append(propiedades, propiedad)
 	}
 

@@ -238,7 +238,7 @@ func (s *PropiedadService) validarDatosCreacion(titulo, provincia, ciudad, tipo 
 	// Validar tipo de propiedad
 	tiposValidos := []string{dominio.TipoCasa, dominio.TipoDepartamento, dominio.TipoTerreno, dominio.TipoComercial}
 	tipoLower := strings.ToLower(strings.TrimSpace(tipo))
-	
+
 	tipoValido := false
 	for _, tipoPermitido := range tiposValidos {
 		if tipoLower == tipoPermitido {
@@ -279,11 +279,11 @@ func (s *PropiedadService) ObtenerEstadisticas() (map[string]interface{}, error)
 
 	stats["por_tipo"] = tipoCount
 	stats["por_estado"] = estadoCount
-	
+
 	if len(propiedades) > 0 {
 		stats["precio_promedio"] = precioTotal / float64(len(propiedades))
 	} else {
-		stats["precio_promedio"] = 0
+		stats["precio_promedio"] = float64(0)
 	}
 
 	return stats, nil
