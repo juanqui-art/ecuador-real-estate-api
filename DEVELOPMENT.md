@@ -201,10 +201,96 @@ docker-compose exec postgres pg_dump -U admin inmobiliaria_db > backup.sql
 2. Verificar DATABASE_URL correcto
 3. Ver logs de la aplicación Go
 
-## 🎯 Próximos Pasos
+## 🎯 Checklist de Seguimiento Diario
 
-1. ✅ Configurar entorno GoLand + Docker
-2. ⏳ Ejecutar migraciones
-3. ⏳ Probar API endpoints
-4. ⏳ Crear tests unitarios
-5. ⏳ Implementar funcionalidades adicionales
+### Estado Actual (2025-01-08)
+- ✅ Configurar entorno GoLand + Docker
+- ✅ Ejecutar migraciones (17 migraciones aplicadas)
+- ✅ Probar API endpoints (13 endpoints funcionales)
+- ✅ Crear tests unitarios (79 tests, 92.3% cobertura)
+- ✅ PostgreSQL FTS implementado
+- 🔄 Funcionalidades core (paginación, imágenes, validaciones)
+
+### Checklist Sesión de Trabajo
+
+#### Al Iniciar Sesión
+- [ ] Leer PROGRESS.md para contexto
+- [ ] Verificar estado tests: `go test ./...`
+- [ ] Verificar API corriendo: `go run cmd/server/main.go`
+- [ ] Revisar git status: `git status`
+
+#### Durante Desarrollo
+- [ ] Implementar funcionalidad específica
+- [ ] Crear/actualizar tests correspondientes
+- [ ] Verificar cobertura: `go test -cover ./...`
+- [ ] Verificar formato: `go fmt ./...`
+- [ ] Verificar código: `go vet ./...`
+
+#### Al Finalizar Feature
+- [ ] Todos los tests pasan
+- [ ] Cobertura >90% mantenida
+- [ ] Commit con mensaje descriptivo
+- [ ] Actualizar PROGRESS.md
+- [ ] Actualizar CLAUDE.md si es necesario
+
+#### Antes de Cerrar Sesión
+- [ ] Commit final con estado actual
+- [ ] Actualizar PROGRESS.md con próximos pasos
+- [ ] Verificar que no hay cambios sin commitear
+- [ ] Anotar cualquier problema o bloqueador
+
+### Comandos Rápidos
+
+```bash
+# Status completo
+git status && go test -cover ./...
+
+# Commit rápido
+git add . && git commit -m "feat: [descripción]"
+
+# Verificar funcionalidad
+curl http://localhost:8080/api/health
+
+# Ver logs recientes
+git log --oneline -10
+```
+
+### Funcionalidades Próximas
+
+#### 1. Sistema de Paginación
+- [ ] Crear PaginationParams struct
+- [ ] Implementar LIMIT/OFFSET en repository
+- [ ] Actualizar endpoints con parámetros
+- [ ] Crear tests paginación
+
+#### 2. Sistema de Imágenes
+- [ ] Migración tabla property_images
+- [ ] Endpoints upload/delete
+- [ ] Integración filesystem
+- [ ] Tests manejo imágenes
+
+#### 3. Validaciones Mejoradas
+- [ ] Validaciones específicas Ecuador
+- [ ] Middleware validación
+- [ ] Error handling mejorado
+- [ ] Tests validaciones
+
+### Troubleshooting Común
+
+#### IDLE se ralentiza
+1. Hacer commit frecuente del progreso
+2. Consultar PROGRESS.md para contexto
+3. Verificar estado con `go test ./...`
+4. Continuar desde último estado conocido
+
+#### Tests fallan
+1. Verificar cambios con `git diff`
+2. Ejecutar test específico: `go test ./internal/[layer] -v`
+3. Revisar logs de error completos
+4. Consultar tests similares en codebase
+
+#### API no responde
+1. Verificar PostgreSQL: Services → postgres → Status
+2. Verificar variables entorno en Run Configuration
+3. Revisar logs aplicación Go
+4. Probar health check: `curl http://localhost:8080/api/health`
