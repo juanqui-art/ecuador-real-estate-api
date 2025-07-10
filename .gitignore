@@ -30,31 +30,13 @@ logs/
 *.db
 *.sqlite
 
-# GoLand / IntelliJ
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/usage.statistics.xml
-.idea/dictionaries
-.idea/shelf/
-.idea/aws.xml
-.idea/contentModel.xml
-.idea/dataSources/
-.idea/dataSources.local.xml
-.idea/dataSources.xml
-.idea/sqlDataSources.xml
-.idea/sqldialects.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
-.idea/gradle.xml
-.idea/libraries
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/modules.xml
-.idea/*.iml
-.idea/modules
-
-# Keep run configurations (útiles para el equipo)
+# GoLand / IntelliJ - most rules are in .idea/.gitignore
+# Keep only essential team files: runConfigurations/, inspectionProfiles/, vcs.xml, .gitignore
+.idea/*
+!.idea/.gitignore
 !.idea/runConfigurations/
+!.idea/inspectionProfiles/
+!.idea/vcs.xml
 
 # Docker volumes y cache
 docker/data/
