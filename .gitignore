@@ -40,7 +40,9 @@ logs/
 .idea/contentModel.xml
 .idea/dataSources/
 .idea/dataSources.local.xml
+.idea/dataSources.xml
 .idea/sqlDataSources.xml
+.idea/sqldialects.xml
 .idea/dynamic.xml
 .idea/uiDesigner.xml
 .idea/gradle.xml
@@ -89,3 +91,6 @@ docker/
 migraciones/
 usage_examples.md
 test_*.go
+
+# Claude Code personal files
+.claude/
