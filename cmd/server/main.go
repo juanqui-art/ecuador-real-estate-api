@@ -40,14 +40,18 @@ func main() {
 	propertyRepo := repository.NewPostgreSQLPropertyRepository(db)
 	imageRepo := repository.NewPostgreSQLImageRepository(db)
 
-	// Create service
+	// Create services
 	propertyService := service.NewPropertyService(propertyRepo, imageRepo)
 
-	// Create handler
+	// Create handlers
 	propertyHandler := handlers.NewPropertyHandler(propertyService)
+	// TODO: Enable when dependencies are fixed
+	// imageHandler := handlers.NewImageHandler(imageService)
+	// userHandler := handlers.NewUserHandler(userService, permissionService, log.Default())
+	// agencyHandler := handlers.NewAgencyHandler(agencyService, permissionService, log.Default())
 
 	// Configure routes
-	router := configureRoutes(propertyHandler)
+	router := configureRoutesBasic(propertyHandler)
 
 	// Configure HTTP server
 	server := &http.Server{
@@ -102,11 +106,13 @@ func addMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// configureRoutes configures all application routes
-func configureRoutes(propertyHandler *handlers.PropertyHandler) *http.ServeMux {
+// configureRoutesBasic configures basic property routes that work
+func configureRoutesBasic(propertyHandler *handlers.PropertyHandler) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	// Property routes
+	// ============== BASIC PROPERTY ROUTES ==============
+	
+	// Basic CRUD
 	mux.HandleFunc("/api/properties", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -132,13 +138,11 @@ func configureRoutes(propertyHandler *handlers.PropertyHandler) *http.ServeMux {
 		}
 	})
 
-	// Property by slug route
+	// Property by slug
 	mux.HandleFunc("/api/properties/slug/", propertyHandler.GetPropertyBySlug)
 
-	// Filter properties route
+	// Basic filtering and search
 	mux.HandleFunc("/api/properties/filter", propertyHandler.FilterProperties)
-
-	// Statistics route
 	mux.HandleFunc("/api/properties/statistics", propertyHandler.GetStatistics)
 
 	// Health check route
@@ -153,24 +157,26 @@ func configureRoutes(propertyHandler *handlers.PropertyHandler) *http.ServeMux {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{
-			"message": "Real Estate Properties API",
-			"version": "1.0.0",
+			"message": "Real Estate Properties API - Basic System",
+			"version": "1.5.0",
+			"status": "Basic endpoints functional - Advanced features in development",
+			"features": [
+				"Property Management (CRUD)",
+				"Basic Search & Filtering", 
+				"PostgreSQL Database",
+				"SEO-friendly URLs"
+			],
 			"endpoints": {
-				"GET /api/health": "Service status",
-				"GET /api/properties": "List all properties",
-				"POST /api/properties": "Create new property",
-				"GET /api/properties/{id}": "Get property by ID",
-				"GET /api/properties/slug/{slug}": "Get property by SEO slug",
-				"PUT /api/properties/{id}": "Update property",
-				"DELETE /api/properties/{id}": "Delete property",
-				"GET /api/properties/filter": "Filter properties (query params: province, min_price, max_price, q)",
-				"GET /api/properties/statistics": "Get statistics"
+				"properties": {
+					"basic": ["GET,POST /api/properties", "GET,PUT,DELETE /api/properties/{id}", "GET /api/properties/slug/{slug}"],
+					"search": ["GET /api/properties/filter"],
+					"analytics": ["GET /api/properties/statistics"]
+				},
+				"system": ["GET /api/health"]
 			},
-			"seo": {
-				"description": "SEO slugs are automatically generated from title",
-				"format": "normalized-title-{id}",
-				"example": "/api/properties/slug/beautiful-house-samborondon-abcd1234"
-			}
+			"total_endpoints": 6,
+			"database": "PostgreSQL",
+			"note": "Extended features (images, users, agencies, FTS, pagination) coming soon"
 		}`))
 	})
 

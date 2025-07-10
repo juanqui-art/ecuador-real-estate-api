@@ -70,8 +70,8 @@ func (s *PropertyService) CreateProperty(title, description, province, city, pro
 	city = strings.TrimSpace(city)
 	propertyType = strings.ToLower(strings.TrimSpace(propertyType))
 
-	// Create the property
-	property := domain.NewProperty(title, description, province, city, propertyType, price)
+	// Create the property - pass empty string for ownerID for now
+	property := domain.NewProperty(title, description, province, city, propertyType, price, "")
 	
 	// Set parking spaces
 	if err := property.SetParkingSpaces(parkingSpaces); err != nil {

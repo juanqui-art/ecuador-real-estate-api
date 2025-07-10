@@ -32,18 +32,35 @@ const (
 
 // User represents a system user with role-based access
 type User struct {
-	ID          string     `json:"id" db:"id"`
-	Email       string     `json:"email" db:"email"`
-	Name        string     `json:"name" db:"name"`
-	Phone       *string    `json:"phone" db:"phone"`
-	Role        UserRole   `json:"role" db:"role"`
-	Status      UserStatus `json:"status" db:"status"`
-	AgencyID    *string    `json:"agency_id" db:"agency_id"`
-	Avatar      *string    `json:"avatar" db:"avatar"`
-	LastLoginAt *time.Time `json:"last_login_at" db:"last_login_at"`
-	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
-	DeletedAt   *time.Time `json:"deleted_at" db:"deleted_at"`
+	ID                      string     `json:"id" db:"id"`
+	Email                   string     `json:"email" db:"email"`
+	Name                    string     `json:"name" db:"name"`
+	FirstName               string     `json:"first_name" db:"first_name"`
+	LastName                string     `json:"last_name" db:"last_name"`
+	Cedula                  *string    `json:"cedula" db:"cedula"`
+	Phone                   *string    `json:"phone" db:"phone"`
+	DateOfBirth             *time.Time `json:"date_of_birth" db:"date_of_birth"`
+	Role                    UserRole   `json:"role" db:"role"`
+	Status                  UserStatus `json:"status" db:"status"`
+	Active                  bool       `json:"active" db:"active"`
+	PasswordHash            string     `json:"-" db:"password_hash"`
+	EmailVerified           bool       `json:"email_verified" db:"email_verified"`
+	EmailVerificationToken  *string    `json:"-" db:"email_verification_token"`
+	PasswordResetToken      *string    `json:"-" db:"password_reset_token"`
+	PasswordResetExpires    *time.Time `json:"-" db:"password_reset_expires"`
+	LastLogin               *time.Time `json:"last_login" db:"last_login"`
+	AgencyID                *string    `json:"agency_id" db:"agency_id"`
+	Avatar                  *string    `json:"avatar" db:"avatar"`
+	AvatarURL               *string    `json:"avatar_url" db:"avatar_url"`
+	Bio                     *string    `json:"bio" db:"bio"`
+	MinBudget               *float64   `json:"min_budget" db:"min_budget"`
+	MaxBudget               *float64   `json:"max_budget" db:"max_budget"`
+	InterestedProvinces     []string   `json:"interested_provinces,omitempty"`
+	InterestedTypes         []string   `json:"interested_types,omitempty"`
+	LastLoginAt             *time.Time `json:"last_login_at" db:"last_login_at"`
+	CreatedAt               time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt               time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt               *time.Time `json:"deleted_at" db:"deleted_at"`
 }
 
 // NewUser creates a new user with validation
@@ -283,4 +300,66 @@ func validateStatus(status UserStatus) error {
 	}
 
 	return fmt.Errorf("invalid status: %s", status)
+}
+
+// Role represents the user role enum type for repository use
+type Role string
+
+const (
+	RoleAdminStr  Role = "admin"
+	RoleAgencyStr Role = "agency"
+	RoleAgentStr  Role = "agent"
+	RoleOwnerStr  Role = "owner"
+	RoleBuyerStr  Role = "buyer"
+)
+
+// UserSearchParams represents search parameters for users
+type UserSearchParams struct {
+	Query      string              `json:"query,omitempty"`
+	Role       *UserRole           `json:"role,omitempty"`
+	Status     *UserStatus         `json:"status,omitempty"`
+	Active     *bool               `json:"active,omitempty"`
+	Province   string              `json:"province,omitempty"`
+	Provinces  []string            `json:"provinces,omitempty"`
+	City       string              `json:"city,omitempty"`
+	AgencyID   *string             `json:"agency_id,omitempty"`
+	MinBudget  *float64            `json:"min_budget,omitempty"`
+	MaxBudget  *float64            `json:"max_budget,omitempty"`
+	Pagination *PaginationParams   `json:"pagination,omitempty"`
+	Page       int                 `json:"page"`
+	PageSize   int                 `json:"page_size"`
+	SortBy     string              `json:"sort_by"`
+	SortDesc   bool                `json:"sort_desc"`
+}
+
+// UserStats represents user statistics
+type UserStats struct {
+	TotalUsers         int                    `json:"total_users"`
+	ActiveUsers        int                    `json:"active_users"`
+	InactiveUsers      int                    `json:"inactive_users"`
+	SuspendedUsers     int                    `json:"suspended_users"`
+	PendingUsers       int                    `json:"pending_users"`
+	AdminCount         int                    `json:"admin_count"`
+	AgencyCount        int                    `json:"agency_count"`
+	AgentCount         int                    `json:"agent_count"`
+	OwnerCount         int                    `json:"owner_count"`
+	BuyerCount         int                    `json:"buyer_count"`
+	EmailVerified      int                    `json:"email_verified"`
+	WithBudget         int                    `json:"with_budget"`
+	AssociatedAgents   int                    `json:"associated_agents"`
+	UsersByRole        map[string]int         `json:"users_by_role"`
+	UsersByProvince    map[string]int         `json:"users_by_province"`
+	NewUsersThisMonth  int                    `json:"new_users_this_month"`
+	AverageAge         float64                `json:"average_age"`
+	GenderDistribution map[string]int         `json:"gender_distribution"`
+}
+
+// Business methods for User
+
+// GetFullName returns the full name of the user
+func (u *User) GetFullName() string {
+	if u.FirstName != "" && u.LastName != "" {
+		return u.FirstName + " " + u.LastName
+	}
+	return u.Name
 }
