@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"realty-core/internal/domain"
 	"realty-core/internal/repository"
 	"realty-core/internal/service"
 )
@@ -23,25 +25,15 @@ func NewPropertyHandler(service service.PropertyServiceInterface) *PropertyHandl
 
 // CreatePropertyRequest represents the request structure for creating a property
 type CreatePropertyRequest struct {
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	Province    string  `json:"province"`
-	City        string  `json:"city"`
-	Type        string  `json:"type"`
+	Title         string  `json:"title"`
+	Description   string  `json:"description"`
+	Price         float64 `json:"price"`
+	Province      string  `json:"province"`
+	City          string  `json:"city"`
+	Type          string  `json:"type"`
+	ParkingSpaces int     `json:"parking_spaces"`
 }
 
-// ErrorResponse represents a standardized error response
-type ErrorResponse struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
-}
-
-// SuccessResponse represents a standardized success response
-type SuccessResponse struct {
-	Data    interface{} `json:"data"`
-	Message string      `json:"message"`
-}
 
 // CreateProperty handles POST /api/properties
 func (h *PropertyHandler) CreateProperty(w http.ResponseWriter, r *http.Request) {
@@ -63,6 +55,7 @@ func (h *PropertyHandler) CreateProperty(w http.ResponseWriter, r *http.Request)
 		req.City,
 		req.Type,
 		req.Price,
+		req.ParkingSpaces,
 	)
 
 	if err != nil {
@@ -485,6 +478,41 @@ func (h *PropertyHandler) SetPropertyFeatured(w http.ResponseWriter, r *http.Req
 	h.respondSuccess(w, http.StatusOK, nil, "Property featured status updated successfully")
 }
 
+// SetPropertyParkingSpaces handles POST /api/properties/{id}/parking-spaces
+func (h *PropertyHandler) SetPropertyParkingSpaces(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		h.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	id := h.extractIDFromNestedURL(r.URL.Path)
+	if id == "" {
+		h.respondError(w, http.StatusBadRequest, "Property ID required")
+		return
+	}
+
+	var req struct {
+		ParkingSpaces int `json:"parking_spaces"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON: "+err.Error())
+		return
+	}
+
+	err := h.service.SetPropertyParkingSpaces(id, req.ParkingSpaces)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			h.respondError(w, http.StatusNotFound, err.Error())
+		} else {
+			h.respondError(w, http.StatusBadRequest, err.Error())
+		}
+		return
+	}
+
+	h.respondSuccess(w, http.StatusOK, nil, "Property parking spaces updated successfully")
+}
+
 // HealthCheck handles GET /api/health
 func (h *PropertyHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -563,7 +591,7 @@ func (h *PropertyHandler) respondError(w http.ResponseWriter, status int, messag
 	w.WriteHeader(status)
 
 	errorResp := ErrorResponse{
-		Error:   http.StatusText(status),
+		Success: false,
 		Message: message,
 	}
 
@@ -578,6 +606,7 @@ func (h *PropertyHandler) respondSuccess(w http.ResponseWriter, status int, data
 	w.WriteHeader(status)
 
 	successResp := SuccessResponse{
+		Success: true,
 		Data:    data,
 		Message: message,
 	}
@@ -585,4 +614,235 @@ func (h *PropertyHandler) respondSuccess(w http.ResponseWriter, status int, data
 	if err := json.NewEncoder(w).Encode(successResp); err != nil {
 		log.Printf("Error encoding success response: %v", err)
 	}
+}
+
+// Pagination handlers
+
+// ListPropertiesPaginated handles GET /api/properties/paginated
+func (h *PropertyHandler) ListPropertiesPaginated(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	pagination, err := h.parsePaginationParams(r)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	result, err := h.service.ListPropertiesPaginated(pagination)
+	if err != nil {
+		h.respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondSuccess(w, http.StatusOK, result, "Paginated properties retrieved successfully")
+}
+
+// FilterPropertiesPaginated handles GET /api/properties/filter/paginated
+func (h *PropertyHandler) FilterPropertiesPaginated(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	query := r.URL.Query()
+	province := query.Get("province")
+	minPriceStr := query.Get("min_price")
+	maxPriceStr := query.Get("max_price")
+	searchQuery := query.Get("q")
+
+	pagination, err := h.parsePaginationParams(r)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var result *domain.PaginatedResponse
+
+	// Search by query if provided
+	if searchQuery != "" {
+		result, err = h.service.SearchPropertiesPaginated(searchQuery, pagination)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		h.respondSuccess(w, http.StatusOK, result, "Paginated properties filtered by search query")
+		return
+	}
+
+	// Filter by province if provided
+	if province != "" {
+		result, err = h.service.FilterByProvincePaginated(province, pagination)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		h.respondSuccess(w, http.StatusOK, result, "Paginated properties filtered by province")
+		return
+	}
+
+	// Filter by price range if provided
+	if minPriceStr != "" && maxPriceStr != "" {
+		minPrice, err := strconv.ParseFloat(minPriceStr, 64)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, "Invalid minimum price")
+			return
+		}
+
+		maxPrice, err := strconv.ParseFloat(maxPriceStr, 64)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, "Invalid maximum price")
+			return
+		}
+
+		result, err = h.service.FilterByPriceRangePaginated(minPrice, maxPrice, pagination)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		h.respondSuccess(w, http.StatusOK, result, "Paginated properties filtered by price range")
+		return
+	}
+
+	// If no filters, return all properties paginated
+	result, err = h.service.ListPropertiesPaginated(pagination)
+	if err != nil {
+		h.respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondSuccess(w, http.StatusOK, result, "All paginated properties")
+}
+
+// SearchRankedPaginated handles GET /api/properties/search/ranked/paginated
+func (h *PropertyHandler) SearchRankedPaginated(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	query := r.URL.Query()
+	searchQuery := query.Get("q")
+
+	if searchQuery == "" {
+		h.respondError(w, http.StatusBadRequest, "Search query required")
+		return
+	}
+
+	pagination, err := h.parsePaginationParams(r)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	result, err := h.service.SearchPropertiesRankedPaginated(searchQuery, pagination)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.respondSuccess(w, http.StatusOK, result, "Paginated ranked search results retrieved successfully")
+}
+
+// AdvancedSearchPaginated handles POST /api/properties/search/advanced/paginated
+func (h *PropertyHandler) AdvancedSearchPaginated(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		h.respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var req struct {
+		Query        string                   `json:"query"`
+		Province     string                   `json:"province"`
+		City         string                   `json:"city"`
+		Type         string                   `json:"type"`
+		MinPrice     float64                  `json:"min_price"`
+		MaxPrice     float64                  `json:"max_price"`
+		MinBedrooms  int                      `json:"min_bedrooms"`
+		MaxBedrooms  int                      `json:"max_bedrooms"`
+		MinBathrooms float64                  `json:"min_bathrooms"`
+		MaxBathrooms float64                  `json:"max_bathrooms"`
+		MinArea      float64                  `json:"min_area"`
+		MaxArea      float64                  `json:"max_area"`
+		FeaturedOnly bool                     `json:"featured_only"`
+		Pagination   *domain.PaginationParams `json:"pagination"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON: "+err.Error())
+		return
+	}
+
+	// Build search parameters
+	params := repository.AdvancedSearchParams{
+		Query:        req.Query,
+		Province:     req.Province,
+		City:         req.City,
+		Type:         req.Type,
+		MinPrice:     req.MinPrice,
+		MaxPrice:     req.MaxPrice,
+		MinBedrooms:  req.MinBedrooms,
+		MaxBedrooms:  req.MaxBedrooms,
+		MinBathrooms: req.MinBathrooms,
+		MaxBathrooms: req.MaxBathrooms,
+		MinArea:      req.MinArea,
+		MaxArea:      req.MaxArea,
+		FeaturedOnly: req.FeaturedOnly,
+	}
+
+	pagination := req.Pagination
+	if pagination == nil {
+		pagination = domain.NewPaginationParams()
+	}
+
+	result, err := h.service.AdvancedSearchPaginated(params, pagination)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.respondSuccess(w, http.StatusOK, result, "Paginated advanced search results retrieved successfully")
+}
+
+// parsePaginationParams parses pagination parameters from URL query string
+func (h *PropertyHandler) parsePaginationParams(r *http.Request) (*domain.PaginationParams, error) {
+	query := r.URL.Query()
+	
+	pagination := domain.NewPaginationParams()
+	
+	// Parse page
+	if pageStr := query.Get("page"); pageStr != "" {
+		page, err := strconv.Atoi(pageStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid page parameter: %s", pageStr)
+		}
+		pagination.Page = page
+	}
+	
+	// Parse page_size
+	if pageSizeStr := query.Get("page_size"); pageSizeStr != "" {
+		pageSize, err := strconv.Atoi(pageSizeStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid page_size parameter: %s", pageSizeStr)
+		}
+		pagination.PageSize = pageSize
+	}
+	
+	// Parse sort_by
+	if sortBy := query.Get("sort_by"); sortBy != "" {
+		pagination.SortBy = sortBy
+	}
+	
+	// Parse sort_desc
+	if sortDescStr := query.Get("sort_desc"); sortDescStr != "" {
+		sortDesc, err := strconv.ParseBool(sortDescStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid sort_desc parameter: %s", sortDescStr)
+		}
+		pagination.SortDesc = sortDesc
+	}
+	
+	return pagination, nil
 }

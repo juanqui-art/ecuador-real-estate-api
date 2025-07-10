@@ -27,6 +27,13 @@ type PropertyRepository interface {
 	SearchPropertiesRanked(query string, limit int) ([]PropertySearchResult, error)
 	GetSearchSuggestions(query string, limit int) ([]SearchSuggestion, error)
 	AdvancedSearch(params AdvancedSearchParams) ([]PropertySearchResult, error)
+	// Pagination methods
+	GetAllPaginated(pagination *domain.PaginationParams) ([]domain.Property, int, error)
+	GetByProvincePaginated(province string, pagination *domain.PaginationParams) ([]domain.Property, int, error)
+	GetByPriceRangePaginated(minPrice, maxPrice float64, pagination *domain.PaginationParams) ([]domain.Property, int, error)
+	SearchPropertiesPaginated(query string, pagination *domain.PaginationParams) ([]domain.Property, int, error)
+	SearchPropertiesRankedPaginated(query string, pagination *domain.PaginationParams) ([]PropertySearchResult, int, error)
+	AdvancedSearchPaginated(params AdvancedSearchParams, pagination *domain.PaginationParams) ([]PropertySearchResult, int, error)
 }
 
 // PropertySearchResult represents a search result with ranking
@@ -87,7 +94,7 @@ func (r *PostgreSQLPropertyRepository) Create(property *domain.Property) error {
 		INSERT INTO properties (
 			id, slug, title, description, price, province, city, sector, address,
 			latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			main_image, images, video_tour, tour_360,
+			parking_spaces, main_image, images, video_tour, tour_360,
 			rent_price, common_expenses, price_per_m2,
 			year_built, floors, property_status, furnished,
 			garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
@@ -96,7 +103,7 @@ func (r *PostgreSQLPropertyRepository) Create(property *domain.Property) error {
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
 			$18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32,
-			$33, $34, $35, $36, $37, $38, $39, $40, $41, $42
+			$33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43
 		)
 	`
 
@@ -106,7 +113,7 @@ func (r *PostgreSQLPropertyRepository) Create(property *domain.Property) error {
 		property.Province, property.City, property.Sector, property.Address,
 		property.Latitude, property.Longitude, property.LocationPrecision,
 		property.Type, property.Status, property.Bedrooms, property.Bathrooms, property.AreaM2,
-		property.MainImage, string(imagesJSON), property.VideoTour, property.Tour360,
+		property.ParkingSpaces, property.MainImage, string(imagesJSON), property.VideoTour, property.Tour360,
 		property.RentPrice, property.CommonExpenses, property.PricePerM2,
 		property.YearBuilt, property.Floors, property.PropertyStatus, property.Furnished,
 		property.Garage, property.Pool, property.Garden, property.Terrace, property.Balcony,
@@ -128,7 +135,7 @@ func (r *PostgreSQLPropertyRepository) GetByID(id string) (*domain.Property, err
 	query := `
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
@@ -146,7 +153,7 @@ func (r *PostgreSQLPropertyRepository) GetByID(id string) (*domain.Property, err
 		&property.Province, &property.City, &property.Sector, &property.Address,
 		&property.Latitude, &property.Longitude, &property.LocationPrecision,
 		&property.Type, &property.Status, &property.Bedrooms, &property.Bathrooms, &property.AreaM2,
-		&property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
+		&property.ParkingSpaces, &property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
 		&property.RentPrice, &property.CommonExpenses, &property.PricePerM2,
 		&property.YearBuilt, &property.Floors, &property.PropertyStatus, &property.Furnished,
 		&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
@@ -185,7 +192,7 @@ func (r *PostgreSQLPropertyRepository) GetBySlug(slug string) (*domain.Property,
 	query := `
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
@@ -203,7 +210,7 @@ func (r *PostgreSQLPropertyRepository) GetBySlug(slug string) (*domain.Property,
 		&property.Province, &property.City, &property.Sector, &property.Address,
 		&property.Latitude, &property.Longitude, &property.LocationPrecision,
 		&property.Type, &property.Status, &property.Bedrooms, &property.Bathrooms, &property.AreaM2,
-		&property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
+		&property.ParkingSpaces, &property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
 		&property.RentPrice, &property.CommonExpenses, &property.PricePerM2,
 		&property.YearBuilt, &property.Floors, &property.PropertyStatus, &property.Furnished,
 		&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
@@ -242,7 +249,7 @@ func (r *PostgreSQLPropertyRepository) GetAll() ([]domain.Property, error) {
 	query := `
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
@@ -269,7 +276,7 @@ func (r *PostgreSQLPropertyRepository) GetAll() ([]domain.Property, error) {
 			&property.Province, &property.City, &property.Sector, &property.Address,
 			&property.Latitude, &property.Longitude, &property.LocationPrecision,
 			&property.Type, &property.Status, &property.Bedrooms, &property.Bathrooms, &property.AreaM2,
-			&property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
+			&property.ParkingSpaces, &property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
 			&property.RentPrice, &property.CommonExpenses, &property.PricePerM2,
 			&property.YearBuilt, &property.Floors, &property.PropertyStatus, &property.Furnished,
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
@@ -327,13 +334,13 @@ func (r *PostgreSQLPropertyRepository) Update(property *domain.Property) error {
 			slug = $2, title = $3, description = $4, price = $5, province = $6, city = $7,
 			sector = $8, address = $9, latitude = $10, longitude = $11, location_precision = $12,
 			type = $13, status = $14, bedrooms = $15, bathrooms = $16, area_m2 = $17,
-			main_image = $18, images = $19, video_tour = $20, tour_360 = $21,
-			rent_price = $22, common_expenses = $23, price_per_m2 = $24,
-			year_built = $25, floors = $26, property_status = $27, furnished = $28,
-			garage = $29, pool = $30, garden = $31, terrace = $32, balcony = $33,
-			security = $34, elevator = $35, air_conditioning = $36,
-			tags = $37, featured = $38, view_count = $39, real_estate_company_id = $40,
-			updated_at = $41
+			parking_spaces = $18, main_image = $19, images = $20, video_tour = $21, tour_360 = $22,
+			rent_price = $23, common_expenses = $24, price_per_m2 = $25,
+			year_built = $26, floors = $27, property_status = $28, furnished = $29,
+			garage = $30, pool = $31, garden = $32, terrace = $33, balcony = $34,
+			security = $35, elevator = $36, air_conditioning = $37,
+			tags = $38, featured = $39, view_count = $40, real_estate_company_id = $41,
+			updated_at = $42
 		WHERE id = $1
 	`
 
@@ -343,7 +350,7 @@ func (r *PostgreSQLPropertyRepository) Update(property *domain.Property) error {
 		property.Province, property.City, property.Sector, property.Address,
 		property.Latitude, property.Longitude, property.LocationPrecision,
 		property.Type, property.Status, property.Bedrooms, property.Bathrooms, property.AreaM2,
-		property.MainImage, string(imagesJSON), property.VideoTour, property.Tour360,
+		property.ParkingSpaces, property.MainImage, string(imagesJSON), property.VideoTour, property.Tour360,
 		property.RentPrice, property.CommonExpenses, property.PricePerM2,
 		property.YearBuilt, property.Floors, property.PropertyStatus, property.Furnished,
 		property.Garage, property.Pool, property.Garden, property.Terrace, property.Balcony,
@@ -424,7 +431,7 @@ func (r *PostgreSQLPropertyRepository) GetByProvince(province string) ([]domain.
 			&property.Province, &property.City, &property.Sector, &property.Address,
 			&property.Latitude, &property.Longitude, &property.LocationPrecision,
 			&property.Type, &property.Status, &property.Bedrooms, &property.Bathrooms, &property.AreaM2,
-			&property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
+			&property.ParkingSpaces, &property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
 			&property.RentPrice, &property.CommonExpenses, &property.PricePerM2,
 			&property.YearBuilt, &property.Floors, &property.PropertyStatus, &property.Furnished,
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
@@ -483,7 +490,7 @@ func (r *PostgreSQLPropertyRepository) GetByPriceRange(minPrice, maxPrice float6
 			&property.Province, &property.City, &property.Sector, &property.Address,
 			&property.Latitude, &property.Longitude, &property.LocationPrecision,
 			&property.Type, &property.Status, &property.Bedrooms, &property.Bathrooms, &property.AreaM2,
-			&property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
+			&property.ParkingSpaces, &property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
 			&property.RentPrice, &property.CommonExpenses, &property.PricePerM2,
 			&property.YearBuilt, &property.Floors, &property.PropertyStatus, &property.Furnished,
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
@@ -549,7 +556,7 @@ func (r *PostgreSQLPropertyRepository) SearchProperties(query string, limit int)
 			&property.Province, &property.City, &property.Sector, &property.Address,
 			&property.Latitude, &property.Longitude, &property.LocationPrecision,
 			&property.Type, &property.Status, &property.Bedrooms, &property.Bathrooms, &property.AreaM2,
-			&property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
+			&property.ParkingSpaces, &property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
 			&property.RentPrice, &property.CommonExpenses, &property.PricePerM2,
 			&property.YearBuilt, &property.Floors, &property.PropertyStatus, &property.Furnished,
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
@@ -713,6 +720,348 @@ func (r *PostgreSQLPropertyRepository) AdvancedSearch(params AdvancedSearchParam
 	}
 
 	return results, nil
+}
+
+// Pagination methods
+
+// GetAllPaginated returns paginated properties with total count
+func (r *PostgreSQLPropertyRepository) GetAllPaginated(pagination *domain.PaginationParams) ([]domain.Property, int, error) {
+	// Get total count
+	countQuery := "SELECT COUNT(*) FROM properties"
+	var totalCount int
+	err := r.db.QueryRow(countQuery).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error counting properties: %w", err)
+	}
+
+	// Get paginated data
+	query := fmt.Sprintf(`
+		SELECT id, slug, title, description, price, province, city, sector, address,
+			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
+			   main_image, images, video_tour, tour_360,
+			   rent_price, common_expenses, price_per_m2,
+			   year_built, floors, property_status, furnished,
+			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
+			   tags, featured, view_count, real_estate_company_id,
+			   created_at, updated_at
+		FROM properties 
+		ORDER BY %s
+		LIMIT $1 OFFSET $2
+	`, pagination.GetOrderBy())
+
+	rows, err := r.db.Query(query, pagination.GetLimit(), pagination.GetOffset())
+	if err != nil {
+		return nil, 0, fmt.Errorf("error querying paginated properties: %w", err)
+	}
+	defer rows.Close()
+
+	properties, err := r.scanProperties(rows)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return properties, totalCount, nil
+}
+
+// GetByProvincePaginated returns paginated properties filtered by province
+func (r *PostgreSQLPropertyRepository) GetByProvincePaginated(province string, pagination *domain.PaginationParams) ([]domain.Property, int, error) {
+	// Get total count
+	countQuery := "SELECT COUNT(*) FROM properties WHERE province = $1"
+	var totalCount int
+	err := r.db.QueryRow(countQuery, province).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error counting properties by province: %w", err)
+	}
+
+	// Get paginated data
+	query := fmt.Sprintf(`
+		SELECT id, slug, title, description, price, province, city, sector, address,
+			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
+			   main_image, images, video_tour, tour_360,
+			   rent_price, common_expenses, price_per_m2,
+			   year_built, floors, property_status, furnished,
+			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
+			   tags, featured, view_count, real_estate_company_id,
+			   created_at, updated_at
+		FROM properties 
+		WHERE province = $1
+		ORDER BY %s
+		LIMIT $2 OFFSET $3
+	`, pagination.GetOrderBy())
+
+	rows, err := r.db.Query(query, province, pagination.GetLimit(), pagination.GetOffset())
+	if err != nil {
+		return nil, 0, fmt.Errorf("error querying paginated properties by province: %w", err)
+	}
+	defer rows.Close()
+
+	properties, err := r.scanProperties(rows)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return properties, totalCount, nil
+}
+
+// GetByPriceRangePaginated returns paginated properties filtered by price range
+func (r *PostgreSQLPropertyRepository) GetByPriceRangePaginated(minPrice, maxPrice float64, pagination *domain.PaginationParams) ([]domain.Property, int, error) {
+	// Get total count
+	countQuery := "SELECT COUNT(*) FROM properties WHERE price >= $1 AND price <= $2"
+	var totalCount int
+	err := r.db.QueryRow(countQuery, minPrice, maxPrice).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error counting properties by price range: %w", err)
+	}
+
+	// Get paginated data
+	query := fmt.Sprintf(`
+		SELECT id, slug, title, description, price, province, city, sector, address,
+			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
+			   main_image, images, video_tour, tour_360,
+			   rent_price, common_expenses, price_per_m2,
+			   year_built, floors, property_status, furnished,
+			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
+			   tags, featured, view_count, real_estate_company_id,
+			   created_at, updated_at
+		FROM properties 
+		WHERE price >= $1 AND price <= $2
+		ORDER BY %s
+		LIMIT $3 OFFSET $4
+	`, pagination.GetOrderBy())
+
+	rows, err := r.db.Query(query, minPrice, maxPrice, pagination.GetLimit(), pagination.GetOffset())
+	if err != nil {
+		return nil, 0, fmt.Errorf("error querying paginated properties by price range: %w", err)
+	}
+	defer rows.Close()
+
+	properties, err := r.scanProperties(rows)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return properties, totalCount, nil
+}
+
+// SearchPropertiesPaginated performs paginated full-text search
+func (r *PostgreSQLPropertyRepository) SearchPropertiesPaginated(query string, pagination *domain.PaginationParams) ([]domain.Property, int, error) {
+	// Get total count
+	countQuery := "SELECT COUNT(*) FROM properties WHERE search_vector @@ plainto_tsquery('spanish', $1)"
+	var totalCount int
+	err := r.db.QueryRow(countQuery, query).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error counting search results: %w", err)
+	}
+
+	// Get paginated data with FTS ranking
+	sqlQuery := fmt.Sprintf(`
+		SELECT id, slug, title, description, price, province, city, sector, address,
+			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
+			   main_image, images, video_tour, tour_360,
+			   rent_price, common_expenses, price_per_m2,
+			   year_built, floors, property_status, furnished,
+			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
+			   tags, featured, view_count, real_estate_company_id,
+			   created_at, updated_at
+		FROM properties 
+		WHERE search_vector @@ plainto_tsquery('spanish', $1)
+		ORDER BY 
+			ts_rank_cd(search_vector, plainto_tsquery('spanish', $1)) DESC,
+			%s
+		LIMIT $2 OFFSET $3
+	`, pagination.GetOrderBy())
+
+	rows, err := r.db.Query(sqlQuery, query, pagination.GetLimit(), pagination.GetOffset())
+	if err != nil {
+		return nil, 0, fmt.Errorf("error performing paginated search: %w", err)
+	}
+	defer rows.Close()
+
+	properties, err := r.scanProperties(rows)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return properties, totalCount, nil
+}
+
+// SearchPropertiesRankedPaginated performs paginated full-text search with ranking
+func (r *PostgreSQLPropertyRepository) SearchPropertiesRankedPaginated(query string, pagination *domain.PaginationParams) ([]PropertySearchResult, int, error) {
+	// Get total count
+	countQuery := "SELECT COUNT(*) FROM properties WHERE search_vector @@ plainto_tsquery('spanish', $1)"
+	var totalCount int
+	err := r.db.QueryRow(countQuery, query).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error counting ranked search results: %w", err)
+	}
+
+	// Get paginated data with ranking
+	sqlQuery := `
+		SELECT id, slug, title, description, price, province, city, type,
+			   ts_rank_cd(search_vector, plainto_tsquery('spanish', $1)) as rank
+		FROM properties 
+		WHERE search_vector @@ plainto_tsquery('spanish', $1)
+		ORDER BY 
+			ts_rank_cd(search_vector, plainto_tsquery('spanish', $1)) DESC,
+			featured DESC,
+			created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.db.Query(sqlQuery, query, pagination.GetLimit(), pagination.GetOffset())
+	if err != nil {
+		return nil, 0, fmt.Errorf("error performing paginated ranked search: %w", err)
+	}
+	defer rows.Close()
+
+	var results []PropertySearchResult
+	for rows.Next() {
+		var result PropertySearchResult
+		var rank sql.NullFloat64
+
+		err := rows.Scan(
+			&result.Property.ID, &result.Property.Slug, &result.Property.Title,
+			&result.Property.Description, &result.Property.Price,
+			&result.Property.Province, &result.Property.City, &result.Property.Type,
+			&rank,
+		)
+		if err != nil {
+			return nil, 0, fmt.Errorf("error scanning ranked search result: %w", err)
+		}
+
+		if rank.Valid {
+			result.Rank = rank.Float64
+		}
+
+		results = append(results, result)
+	}
+
+	return results, totalCount, nil
+}
+
+// AdvancedSearchPaginated performs paginated advanced search
+func (r *PostgreSQLPropertyRepository) AdvancedSearchPaginated(params AdvancedSearchParams, pagination *domain.PaginationParams) ([]PropertySearchResult, int, error) {
+	// For now, use existing advanced search function and apply pagination manually
+	// In a real implementation, you'd modify the stored procedure to support pagination
+	if params.Limit <= 0 {
+		params.Limit = pagination.GetLimit()
+	}
+	
+	// Get total count using a simpler query
+	countQuery := `
+		SELECT COUNT(*) FROM properties 
+		WHERE ($1 = '' OR search_vector @@ plainto_tsquery('spanish', $1))
+		AND ($2 = '' OR province = $2)
+		AND ($3 = '' OR city = $3)
+		AND ($4 = '' OR type = $4)
+		AND price >= $5 AND price <= $6
+		AND bedrooms >= $7 AND bedrooms <= $8
+		AND bathrooms >= $9 AND bathrooms <= $10
+		AND area_m2 >= $11 AND area_m2 <= $12
+		AND ($13 = false OR featured = true)
+	`
+	
+	maxPrice := params.MaxPrice
+	if maxPrice == 0 {
+		maxPrice = 999999999
+	}
+	maxBedrooms := params.MaxBedrooms
+	if maxBedrooms == 0 {
+		maxBedrooms = 100
+	}
+	maxBathrooms := params.MaxBathrooms
+	if maxBathrooms == 0 {
+		maxBathrooms = 100
+	}
+	maxArea := params.MaxArea
+	if maxArea == 0 {
+		maxArea = 999999
+	}
+	
+	var totalCount int
+	err := r.db.QueryRow(countQuery, 
+		params.Query, params.Province, params.City, params.Type,
+		params.MinPrice, maxPrice,
+		params.MinBedrooms, maxBedrooms,
+		params.MinBathrooms, maxBathrooms,
+		params.MinArea, maxArea,
+		params.FeaturedOnly).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error counting advanced search results: %w", err)
+	}
+
+	// Use existing advanced search with offset simulation
+	offset := pagination.GetOffset()
+	adjustedParams := params
+	adjustedParams.Limit = pagination.GetLimit() + offset
+	
+	allResults, err := r.AdvancedSearch(adjustedParams)
+	if err != nil {
+		return nil, 0, err
+	}
+	
+	// Apply offset manually
+	if offset >= len(allResults) {
+		return []PropertySearchResult{}, totalCount, nil
+	}
+	
+	end := offset + pagination.GetLimit()
+	if end > len(allResults) {
+		end = len(allResults)
+	}
+	
+	results := allResults[offset:end]
+	return results, totalCount, nil
+}
+
+// scanProperties is a helper function to scan properties from rows
+func (r *PostgreSQLPropertyRepository) scanProperties(rows *sql.Rows) ([]domain.Property, error) {
+	var properties []domain.Property
+
+	for rows.Next() {
+		var property domain.Property
+		var imagesJSON, tagsJSON string
+
+		err := rows.Scan(
+			&property.ID, &property.Slug, &property.Title, &property.Description, &property.Price,
+			&property.Province, &property.City, &property.Sector, &property.Address,
+			&property.Latitude, &property.Longitude, &property.LocationPrecision,
+			&property.Type, &property.Status, &property.Bedrooms, &property.Bathrooms, &property.AreaM2,
+			&property.ParkingSpaces, &property.MainImage, &imagesJSON, &property.VideoTour, &property.Tour360,
+			&property.RentPrice, &property.CommonExpenses, &property.PricePerM2,
+			&property.YearBuilt, &property.Floors, &property.PropertyStatus, &property.Furnished,
+			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
+			&property.Security, &property.Elevator, &property.AirConditioning,
+			&tagsJSON, &property.Featured, &property.ViewCount, &property.RealEstateCompanyID,
+			&property.CreatedAt, &property.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning property: %w", err)
+		}
+
+		// Convert JSON back to slices
+		if imagesJSON != "" {
+			err = json.Unmarshal([]byte(imagesJSON), &property.Images)
+			if err != nil {
+				property.Images = []string{} // Continue with empty slice if JSON is invalid
+			}
+		}
+
+		if tagsJSON != "" {
+			err = json.Unmarshal([]byte(tagsJSON), &property.Tags)
+			if err != nil {
+				property.Tags = []string{} // Continue with empty slice if JSON is invalid
+			}
+		}
+
+		properties = append(properties, property)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating properties: %w", err)
+	}
+
+	return properties, nil
 }
 
 // ConnectDatabase establishes connection to PostgreSQL

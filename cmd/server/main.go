@@ -36,11 +36,12 @@ func main() {
 	}
 	defer db.Close()
 
-	// Create repository
+	// Create repositories
 	propertyRepo := repository.NewPostgreSQLPropertyRepository(db)
+	imageRepo := repository.NewPostgreSQLImageRepository(db)
 
 	// Create service
-	propertyService := service.NewPropertyService(propertyRepo)
+	propertyService := service.NewPropertyService(propertyRepo, imageRepo)
 
 	// Create handler
 	propertyHandler := handlers.NewPropertyHandler(propertyService)

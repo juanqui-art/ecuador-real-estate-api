@@ -101,6 +101,37 @@ func (m *MockPropertyService) AdvancedSearch(params repository.AdvancedSearchPar
 	return args.Get(0).([]repository.PropertySearchResult), args.Error(1)
 }
 
+// Pagination methods for MockPropertyService
+func (m *MockPropertyService) ListPropertiesPaginated(pagination *domain.PaginationParams) (*domain.PaginatedResponse, error) {
+	args := m.Called(pagination)
+	return args.Get(0).(*domain.PaginatedResponse), args.Error(1)
+}
+
+func (m *MockPropertyService) FilterByProvincePaginated(province string, pagination *domain.PaginationParams) (*domain.PaginatedResponse, error) {
+	args := m.Called(province, pagination)
+	return args.Get(0).(*domain.PaginatedResponse), args.Error(1)
+}
+
+func (m *MockPropertyService) FilterByPriceRangePaginated(minPrice, maxPrice float64, pagination *domain.PaginationParams) (*domain.PaginatedResponse, error) {
+	args := m.Called(minPrice, maxPrice, pagination)
+	return args.Get(0).(*domain.PaginatedResponse), args.Error(1)
+}
+
+func (m *MockPropertyService) SearchPropertiesPaginated(query string, pagination *domain.PaginationParams) (*domain.PaginatedResponse, error) {
+	args := m.Called(query, pagination)
+	return args.Get(0).(*domain.PaginatedResponse), args.Error(1)
+}
+
+func (m *MockPropertyService) SearchPropertiesRankedPaginated(query string, pagination *domain.PaginationParams) (*domain.PaginatedResponse, error) {
+	args := m.Called(query, pagination)
+	return args.Get(0).(*domain.PaginatedResponse), args.Error(1)
+}
+
+func (m *MockPropertyService) AdvancedSearchPaginated(params repository.AdvancedSearchParams, pagination *domain.PaginationParams) (*domain.PaginatedResponse, error) {
+	args := m.Called(params, pagination)
+	return args.Get(0).(*domain.PaginatedResponse), args.Error(1)
+}
+
 // Helper function to create a test property
 func createTestProperty() *domain.Property {
 	return domain.NewProperty(
