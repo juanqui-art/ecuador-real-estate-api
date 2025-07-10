@@ -208,6 +208,52 @@ release: clean deps check-full test-coverage build-prod
 	@echo "$(GREEN)🎉 Release preparado$(NC)"
 
 ## ================================
+## 🗄️ DATABASE MIGRATION COMMANDS
+## ================================
+
+## migrate-up: Aplicar todas las migraciones pendientes
+migrate-up:
+	@echo "$(BLUE)🆙 Aplicando migraciones...$(NC)"
+	@tools/migrate.sh up
+
+## migrate-down: Revertir última migración (o N migraciones)
+migrate-down:
+	@echo "$(YELLOW)⬇️  Revirtiendo migración...$(NC)"
+	@tools/migrate.sh down $(N)
+
+## migrate-version: Ver versión actual de migraciones
+migrate-version:
+	@echo "$(BLUE)📊 Versión actual de migraciones:$(NC)"
+	@tools/migrate.sh version
+
+## migrate-create: Crear nueva migración (usar NAME=nombre_migracion)
+migrate-create:
+	@echo "$(GREEN)📝 Creando nueva migración: $(NAME)$(NC)"
+	@tools/migrate.sh create $(NAME)
+
+## migrate-force: Forzar versión específica (usar VERSION=numero)
+migrate-force:
+	@echo "$(RED)⚠️  Forzando versión $(VERSION) (peligroso!)$(NC)"
+	@tools/migrate.sh force $(VERSION)
+
+## migrate-validate: Validar conexión a base de datos
+migrate-validate:
+	@echo "$(BLUE)🔍 Validando conexión a base de datos...$(NC)"
+	@tools/migrate.sh validate
+
+## db-setup: Setup completo de base de datos (migraciones + datos de prueba)
+db-setup: migrate-up
+	@echo "$(GREEN)🎉 Base de datos configurada exitosamente$(NC)"
+
+## db-reset: Resetear base de datos (WARNING: destructivo)
+db-reset:
+	@echo "$(RED)⚠️  RESETEO DESTRUCTIVO - Presiona Ctrl+C para cancelar$(NC)"
+	@sleep 3
+	@tools/migrate.sh down 999
+	@tools/migrate.sh up
+	@echo "$(GREEN)🔄 Base de datos reseteada$(NC)"
+
+## ================================
 ## 📚 DOCUMENTATION COMMANDS
 ## ================================
 
