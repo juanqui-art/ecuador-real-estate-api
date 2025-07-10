@@ -64,15 +64,20 @@ vendor/
 dist/
 build/
 
-# Archivos específicos del proyecto a excluir
+# Archivos específicos del proyecto a excluir (temporales/personales)
 docker-compose.yml
-CLAUDE.md
 ejercicios/
 docs/
 docker/
 migraciones/
 usage_examples.md
-test_*.go
+test_cache.go
 
-# Claude Code personal files
-.claude/
+# Claude Code personal files - MANTENER COMANDOS OFICIALES
+.claude/settings.local.json
+
+# GoLand personal configurations (more specific exclusions)
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/shelf/

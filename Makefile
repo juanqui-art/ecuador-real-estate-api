@@ -208,6 +208,31 @@ release: clean deps check-full test-coverage build-prod
 	@echo "$(GREEN)🎉 Release preparado$(NC)"
 
 ## ================================
+## 📚 DOCUMENTATION COMMANDS
+## ================================
+
+## sync-docs: Sincronizar toda la documentación desde PROGRESS.md
+sync-docs:
+	@echo "$(BLUE)📚 Sincronizando documentación...$(NC)"
+	@cd tools && go run sync-docs.go sync
+	@echo "$(GREEN)✅ Documentación sincronizada$(NC)"
+
+## validate-docs: Validar consistencia de documentación
+validate-docs:
+	@echo "$(YELLOW)🔍 Validando consistencia de documentación...$(NC)"
+	@cd tools && go run sync-docs.go validate
+	@echo "$(GREEN)✅ Documentación validada$(NC)"
+
+## check-docs: Verificar estado actual de documentación
+check-docs:
+	@echo "$(BLUE)📋 Estado actual de documentación:$(NC)"
+	@cd tools && go run sync-docs.go check
+
+## fix-docs: Forzar sincronización y validación completa
+fix-docs: sync-docs validate-docs
+	@echo "$(GREEN)🎉 Documentación corregida y validada$(NC)"
+
+## ================================
 ## 📊 PROJECT INFO
 ## ================================
 

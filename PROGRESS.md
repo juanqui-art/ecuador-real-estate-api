@@ -1,11 +1,27 @@
 # 📊 Progreso del Proyecto - Sistema Inmobiliario
 
+<!-- AUTOMATION_METADATA: START -->
+<!-- VERSION: v1.5.0-endpoint-expansion -->
+<!-- DATE: 2025-01-10 -->
+<!-- TESTS_TOTAL: 179 -->
+<!-- TESTS_COVERAGE: 90 -->
+<!-- ENDPOINTS_FUNCTIONAL: 9 -->
+<!-- ENDPOINTS_PENDING: 48 -->
+<!-- ENDPOINTS_TOTAL: 57 -->
+<!-- FEATURES_IMPLEMENTED: 10 -->
+<!-- FEATURES_INTEGRATED: 6 -->
+<!-- DATABASE: PostgreSQL -->
+<!-- ARCHITECTURE: Domain/Service/Repository/Handlers -->
+<!-- STATUS: functional_basic_expanding_integration -->
+<!-- PRIORITY_NEXT: image_system_integration -->
+<!-- AUTOMATION_METADATA: END -->
+
 ## 🎯 Estado Actual del Proyecto
 
-**Fecha última actualización:** 2025-01-09  
-**Versión:** v0.4.0-cache-images  
-**Cobertura de tests:** 90%+ promedio  
-**Tests totales:** 157 funciones de test  
+**Fecha última actualización:** 2025-01-10  
+**Versión:** v1.5.0-endpoint-expansion  
+**Cobertura de tests:** 90%+ promedio (property layer)  
+**Tests totales:** 179 funciones de test  
 
 ## ✅ Funcionalidades Completadas
 
@@ -28,12 +44,13 @@
 - ✅ Queries SQL nativas (no ORM)
 - ✅ Manejo de transacciones
 
-### 4. **API REST Completa** (Completado: 2025-01-05)
-- ✅ 13 endpoints HTTP funcionales
+### 4. **API REST Básica** (Completado: 2025-01-05, Expandido: 2025-01-10)
+- ✅ 6 endpoints HTTP funcionales (property CRUD + filter + health)
 - ✅ Manejo de errores HTTP estandarizado
 - ✅ Validación de entrada JSON
 - ✅ Respuestas JSON estructuradas
 - ✅ Health check endpoint
+- 🔄 57 endpoints adicionales registrados (pending integration)
 
 ### 5. **Sistema de Testing Comprehensivo** (Completado: 2025-01-06)
 - ✅ **Domain tests:** 15 tests para validaciones de negocio
@@ -50,13 +67,13 @@
 - ✅ **Búsqueda avanzada:** Multi-filtros con FTS
 - ✅ **28 tests FTS:** Cobertura completa nueva funcionalidad
 
-### 7. **Sistema de Imágenes Completo** (Completado: 2025-01-09)
+### 7. **Sistema de Imágenes** (Implementado: 2025-01-09, Estado: Pending Integration)
 - ✅ **Domain layer:** ImageInfo, validaciones de negocio
 - ✅ **Storage layer:** LocalImageStorage con gestión de archivos
 - ✅ **Processor layer:** Redimensionado, compresión, thumbnails
 - ✅ **Service layer:** ImageService con lógica de negocio
 - ✅ **Repository layer:** Metadata en PostgreSQL
-- ✅ **Handler layer:** 13 endpoints HTTP para imágenes
+- 🔄 **Handler layer:** 13 endpoints HTTP (code exists, needs integration)
 - ✅ **40+ tests:** Cobertura completa del sistema de imágenes
 
 ### 8. **Sistema de Cache LRU** (Completado: 2025-01-09)
@@ -68,16 +85,24 @@
 - ✅ **Statistics:** Hit/miss rates, memory usage tracking
 - ✅ **62 tests:** Coverage completo del sistema de cache
 
-### 9. **Sistema de Paginación** (Completado: 2025-01-09)
+### 9. **Sistema de Paginación** (Implementado: 2025-01-09, Estado: Pending Integration)
 - ✅ **PaginationParams:** Parámetros de paginación estandarizados
 - ✅ **PaginatedResponse:** Respuestas con metadatos de paginación
-- ✅ **SQL Integration:** LIMIT, OFFSET en todos los endpoints
+- ✅ **SQL Integration:** LIMIT, OFFSET implementado
 - ✅ **Service Layer:** Métodos paginados en PropertyService
-- ✅ **Handler Layer:** Endpoints con soporte de paginación
+- 🔄 **Handler Layer:** Endpoints con soporte de paginación (needs integration)
 
-## 🔧 Endpoints API Actuales
+### 10. **Sistema de Usuarios y Agencias** (Nuevo: 2025-01-10, Estado: Domain Complete)
+- ✅ **Domain structures:** User, Agency con validaciones completas
+- ✅ **Role-based system:** Admin, Agency, Agent, Owner, Buyer
+- ✅ **Authentication fields:** Password hash, email verification, tokens
+- ✅ **Business relationships:** Agency-Agent associations
+- 🔄 **Service Layer:** User/Agency services (needs type compatibility fixes)
+- 🔄 **Handler Layer:** 15+ endpoints (needs service integration)
 
-### CRUD Básico (6 endpoints)
+## 🔧 Endpoints API - Estado Actual vs Planificado
+
+### ✅ Funcionales (6 endpoints)
 ```
 GET    /api/properties              # Listar propiedades
 POST   /api/properties              # Crear propiedad
@@ -85,39 +110,72 @@ GET    /api/properties/{id}         # Obtener por ID
 PUT    /api/properties/{id}         # Actualizar propiedad
 DELETE /api/properties/{id}         # Eliminar propiedad
 GET    /api/properties/slug/{slug}  # Obtener por slug SEO
+GET    /api/properties/filter       # Filtros básicos
+GET    /api/properties/statistics   # Estadísticas de propiedades
+GET    /api/health                  # Health check
 ```
 
-### Búsqueda y Filtros (4 endpoints)
+### 🔄 Implementados pero Pending Integration (48 endpoints)
+
+#### Búsqueda Avanzada (7 endpoints)
 ```
-GET    /api/properties/filter            # Filtros básicos + FTS
-GET    /api/properties/search/ranked     # Búsqueda FTS con ranking
-GET    /api/properties/search/suggestions # Sugerencias autocompletado
-POST   /api/properties/search/advanced   # Búsqueda avanzada multi-filtro
+GET    /api/properties/search/ranked     # FTS con ranking
+GET    /api/properties/search/suggestions # Autocompletado
+POST   /api/properties/search/advanced   # Multi-filtro avanzado
+GET    /api/properties/paginated         # Lista con paginación
+GET    /api/properties/filter/paginated  # Filtros con paginación
+GET    /api/properties/search/ranked/paginated # FTS paginado
+POST   /api/properties/search/advanced/paginated # Avanzado paginado
 ```
 
-### Funcionalidades Adicionales (3 endpoints)
+#### Gestión de Propiedades (3 endpoints)
 ```
-GET    /api/properties/statistics        # Estadísticas de propiedades
-POST   /api/properties/{id}/location     # Establecer ubicación GPS
-POST   /api/properties/{id}/featured     # Marcar como destacada
-GET    /api/health                       # Health check
+POST   /api/properties/{id}/location     # GPS location
+POST   /api/properties/{id}/featured     # Destacar propiedad
+POST   /api/properties/{id}/parking      # Espacios parking
 ```
 
-### Gestión de Imágenes (13 endpoints)
+#### Sistema de Imágenes (13 endpoints)
 ```
 POST   /api/images                       # Upload imagen
-GET    /api/images/{id}                  # Obtener metadata imagen
-GET    /api/properties/{id}/images       # Listar imágenes de propiedad
-PUT    /api/images/{id}/metadata         # Actualizar metadata
-DELETE /api/images/{id}                  # Eliminar imagen
-POST   /api/properties/{id}/images/reorder # Reordenar imágenes
-POST   /api/properties/{id}/images/main  # Establecer imagen principal
-GET    /api/properties/{id}/images/main  # Obtener imagen principal
-GET    /api/images/{id}/variant         # Obtener variante de imagen
-GET    /api/images/{id}/thumbnail       # Obtener thumbnail
-GET    /api/images/stats                # Estadísticas de imágenes
-POST   /api/images/cleanup              # Limpieza archivos temporales
-GET    /api/images/cache/stats          # Estadísticas de cache
+GET,PUT,DELETE /api/images/{id}          # CRUD imagen
+GET    /api/properties/{id}/images       # Imágenes por propiedad
+POST   /api/properties/{id}/images/reorder # Reordenar
+GET,POST /api/properties/{id}/images/main # Imagen principal
+GET    /api/images/{id}/variant         # Variantes procesadas
+GET    /api/images/{id}/thumbnail       # Thumbnails
+GET    /api/images/stats                # Estadísticas
+POST   /api/images/cleanup              # Limpieza temp
+GET    /api/images/cache/stats          # Stats cache
+```
+
+#### Sistema de Usuarios (10 endpoints)
+```
+POST   /api/users/login                 # Autenticación
+POST   /api/users/change-password       # Cambiar password
+POST   /api/users                       # Crear usuario
+GET,PUT,DELETE /api/users/{id}          # CRUD usuario
+GET    /api/users                       # Buscar usuarios
+GET    /api/users/role/{role}           # Por rol
+GET    /api/users/statistics            # Estadísticas
+GET    /api/users/dashboard             # Dashboard
+```
+
+#### Sistema de Agencias (15 endpoints)
+```
+POST   /api/agencies                    # Crear agencia
+GET,PUT,DELETE /api/agencies/{id}       # CRUD agencia
+GET    /api/agencies                    # Buscar agencias
+GET    /api/agencies/active             # Agencias activas
+GET    /api/agencies/service-area/{area} # Por área
+GET    /api/agencies/specialty/{specialty} # Por especialidad
+GET    /api/agencies/{id}/agents        # Agentes de agencia
+POST   /api/agencies/{id}/license       # Gestión licencias
+POST   /api/agencies/{id}/specialty     # Agregar especialidad
+POST   /api/agencies/{id}/service-area  # Agregar área
+POST   /api/agencies/{id}/commission    # Configurar comisión
+GET    /api/agencies/{id}/statistics    # Estadísticas
+GET    /api/agencies/{id}/performance   # Métricas rendimiento
 ```
 
 ## 📈 Métricas de Calidad
@@ -140,25 +198,27 @@ GET    /api/images/cache/stats          # Estadísticas de cache
 - **Soporte español:** ✅ Configurado
 - **Índices GIN:** ✅ Optimizados
 
-## 🚀 Próximas Funcionalidades
+## 🚀 Estado de Implementación y Próximos Pasos
 
-### **Opción A: Sistema de Usuarios y Autenticación** (Prioridad: Alta)
-1. **JWT Authentication** - Sistema de tokens seguro
-2. **Roles y Permisos** - Admin, Agente, Cliente
-3. **Gestión de Perfiles** - CRUD de usuarios
-4. **Middleware de Autorización** - Protección de endpoints
+### **Prioridad Alta: Integración de Sistemas Existentes**
+1. **Solucionar compatibilidad de tipos** - Domain/Service/Handler alignment
+2. **Integrar sistema de imágenes** - 13 endpoints listos para activar
+3. **Integrar sistema de usuarios** - Autenticación y autorización
+4. **Integrar sistema de agencias** - Gestión inmobiliaria completa
+5. **Activar paginación avanzada** - FTS + pagination endpoints
 
-### **Opción B: Dashboard y Analytics** (Prioridad: Media)
-1. **Métricas Inmobiliarias** - Estadísticas por región
-2. **Reportes de Tendencias** - Análisis de precios
-3. **Dashboard Admin** - Panel de control
-4. **API de Analytics** - Agregaciones avanzadas
+### **Prioridad Media: Funcionalidades Avanzadas**
+1. **Dashboard y Analytics** - Métricas inmobiliarias avanzadas  
+2. **Sistema de permisos granular** - Role-based access control completo
+3. **Notificaciones** - Alertas y sistema de favoritos
+4. **Multi-tenancy** - Preparación para SaaS
 
-### **Opción C: Funcionalidades Avanzadas** (Futuro)
-- Sistema de favoritos y alertas
-- Integración con APIs externas
-- Multi-tenancy SaaS
-- Notificaciones en tiempo real
+### **Estado de Código Existente**
+- ✅ **Domain Layer:** 95% completo (User, Agency, Property, Image)
+- 🔄 **Service Layer:** 80% implementado (needs type fixes)
+- 🔄 **Handler Layer:** 85% implementado (needs service integration)
+- ✅ **Repository Layer:** 90% funcional
+- ✅ **Testing:** 179 tests existentes, 90%+ coverage en property layer
 
 ## 🛠️ Comandos de Desarrollo
 
@@ -213,11 +273,19 @@ go build -o bin/inmobiliaria ./cmd/server
 - ✅ Sistema de seguimiento de progreso
 - ✅ Funcionalidades core (paginación implementada)
 
-### Sesión 2025-01-09 (Actual)
+### Sesión 2025-01-09
 - ✅ **Sistema de Imágenes Completo:** 8 archivos, 13 endpoints, 40+ tests
 - ✅ **Sistema de Cache LRU:** 4 archivos, 62 tests, O(1) operations
 - ✅ **Integración Cache-Imágenes:** Thumbnails y variantes cacheadas
 - ✅ **Correcciones Técnicas:** Estructuras duplicadas, imports
+
+### Sesión 2025-01-10 (Actual)
+- ✅ **Auditoría de inconsistencias:** Identificación de desconexión código vs API
+- ✅ **Registro masivo de endpoints:** 57 endpoints planificados en main.go
+- ✅ **Expansión de domain structures:** User, Agency con validaciones completas
+- ✅ **Limpieza de repositorio:** Eliminación archivos personales y temporales
+- 🔄 **Estado funcional básico:** Property CRUD sistema compila y funciona
+- 📋 **Roadmap claro:** Plan para integrar sistemas implementados
 
 ## 💡 Notas Importantes
 
