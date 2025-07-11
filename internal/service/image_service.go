@@ -518,3 +518,47 @@ func (s *ImageService) GenerateThumbnail(imageID string, size int) ([]byte, erro
 func (s *ImageService) GetCacheStats() cache.ImageCacheStats {
 	return s.cache.Stats()
 }
+
+// GetPaginatedImages gets paginated images (simplified version)
+func (s *ImageService) GetPaginatedImages(pagination *domain.PaginationParams) ([]domain.ImageInfo, error) {
+	if pagination == nil {
+		pagination = domain.NewPaginationParams()
+	}
+	
+	if err := pagination.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid pagination parameters: %w", err)
+	}
+	
+	// For simplicity, get all images and paginate manually
+	// In a real implementation, this would be done at the database level
+	// Get images using GetImagesByFormat with empty format to get all
+	allImages, err := s.imageRepo.GetImagesByFormat("")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get images: %w", err)
+	}
+	
+	// Manual pagination
+	offset := pagination.GetOffset()
+	limit := pagination.GetLimit()
+	
+	if offset >= len(allImages) {
+		return []domain.ImageInfo{}, nil
+	}
+	
+	end := offset + limit
+	if end > len(allImages) {
+		end = len(allImages)
+	}
+	
+	return allImages[offset:end], nil
+}
+
+// CountImages returns the total count of images
+func (s *ImageService) CountImages() (int, error) {
+	// Use existing GetImagesByFormat and count the results
+	allImages, err := s.imageRepo.GetImagesByFormat("")
+	if err != nil {
+		return 0, fmt.Errorf("failed to count images: %w", err)
+	}
+	return len(allImages), nil
+}

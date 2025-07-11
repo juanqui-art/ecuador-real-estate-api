@@ -497,7 +497,7 @@ func (r *AgencyRepository) GetStatistics() (*domain.AgencyStats, error) {
 			COUNT(*) FILTER (WHERE license_number IS NOT NULL AND license_number != '') as licensed_agencies,
 			COUNT(*) FILTER (WHERE license_expiry IS NOT NULL AND license_expiry <= CURRENT_TIMESTAMP) as expired_licenses,
 			COALESCE(AVG(commission), 0) as average_commission,
-			(SELECT COUNT(*) FROM users WHERE role = 'agent' AND agency_id IS NOT NULL) as total_agents,
+			(SELECT COUNT(*) FROM users WHERE user_type = 'agent' AND agency_id IS NOT NULL) as total_agents,
 			(SELECT COUNT(*) FROM properties WHERE agency_id IS NOT NULL) as total_properties
 		FROM agencies`
 
@@ -527,8 +527,8 @@ func (r *AgencyRepository) GetPerformance(agencyID string) (*domain.AgencyPerfor
 			COALESCE(SUM(CASE WHEN p.status = 'sold' THEN p.price END), 0) as total_sales_value,
 			COALESCE(SUM(CASE WHEN p.status = 'rented' THEN p.rent_price END), 0) as total_rent_value,
 			COALESCE(AVG(p.price), 0) as average_property_value,
-			(SELECT COUNT(*) FROM users WHERE agency_id = a.id AND role = 'agent') as total_agents,
-			(SELECT COUNT(*) FROM users WHERE agency_id = a.id AND role = 'agent' AND active = TRUE) as active_agents,
+			(SELECT COUNT(*) FROM users WHERE agency_id = a.id AND user_type = 'agent') as total_agents,
+			(SELECT COUNT(*) FROM users WHERE agency_id = a.id AND user_type = 'agent' AND active = TRUE) as active_agents,
 			CASE 
 				WHEN COUNT(p.id) > 0 THEN 
 					ROUND((COUNT(p.id) FILTER (WHERE p.status IN ('sold', 'rented')) * 100.0 / COUNT(p.id)), 2)

@@ -747,3 +747,43 @@ func (s *PropertyService) validateParkingSpaces(parkingSpaces int) error {
 	}
 	return nil
 }
+
+// GetPaginatedProperties gets paginated properties (wrapper for ListPropertiesPaginated)
+func (s *PropertyService) GetPaginatedProperties(pagination *domain.PaginationParams) ([]domain.Property, error) {
+	response, err := s.ListPropertiesPaginated(pagination)
+	if err != nil {
+		return nil, err
+	}
+	
+	properties, ok := response.Data.([]domain.Property)
+	if !ok {
+		return nil, fmt.Errorf("unexpected data type in paginated response")
+	}
+	
+	return properties, nil
+}
+
+// CountProperties returns the total count of properties
+func (s *PropertyService) CountProperties() (int, error) {
+	// Use existing ListProperties and count the results
+	properties, err := s.ListProperties()
+	if err != nil {
+		return 0, fmt.Errorf("error counting properties: %w", err)
+	}
+	return len(properties), nil
+}
+
+// SearchPropertiesSimple performs a simple search (wrapper for existing search)
+func (s *PropertyService) SearchPropertiesSimple(query string, pagination *domain.PaginationParams) ([]domain.Property, error) {
+	response, err := s.SearchPropertiesPaginated(query, pagination)
+	if err != nil {
+		return nil, err
+	}
+	
+	properties, ok := response.Data.([]domain.Property)
+	if !ok {
+		return nil, fmt.Errorf("unexpected data type in search response")
+	}
+	
+	return properties, nil
+}

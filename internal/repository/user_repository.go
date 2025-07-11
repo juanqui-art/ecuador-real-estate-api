@@ -24,19 +24,20 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 func (r *UserRepository) Create(user *domain.User) error {
 	query := `
 		INSERT INTO users (
-			id, first_name, last_name, email, phone, cedula, date_of_birth, 
-			role, active, min_budget, max_budget, interested_provinces, 
-			interested_types, avatar_url, bio, agency_id, password_hash, 
-			email_verified, created_at, updated_at
+			id, first_name, last_name, email, phone, national_id, date_of_birth, 
+			user_type, active, min_budget, max_budget, preferred_provinces, 
+			preferred_property_types, avatar_url, bio, real_estate_company_id,
+			receive_notifications, receive_newsletter, agency_id, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
 		)`
 
 	_, err := r.db.Exec(query,
 		user.ID, user.FirstName, user.LastName, user.Email, user.Phone, user.Cedula,
 		user.DateOfBirth, user.Role, user.Active, user.MinBudget, user.MaxBudget,
-		pq.Array(user.InterestedProvinces), pq.Array(user.InterestedTypes),
-		user.AvatarURL, user.Bio, user.AgencyID, user.PasswordHash, user.EmailVerified,
+		pq.Array(user.PreferredProvinces), pq.Array(user.PreferredPropertyTypes),
+		user.AvatarURL, user.Bio, user.RealEstateCompanyID,
+		user.ReceiveNotifications, user.ReceiveNewsletter, user.AgencyID,
 		user.CreatedAt, user.UpdatedAt,
 	)
 
@@ -50,9 +51,9 @@ func (r *UserRepository) Create(user *domain.User) error {
 // GetByID retrieves a user by ID
 func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, phone, cedula, date_of_birth, 
-			   role, active, min_budget, max_budget, interested_provinces, 
-			   interested_types, avatar_url, bio, agency_id, password_hash, 
+		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
+			   user_type, active, min_budget, max_budget, preferred_provinces, 
+			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
 			   email_verified, email_verification_token, password_reset_token, 
 			   password_reset_expires, last_login, created_at, updated_at
 		FROM users 
@@ -62,8 +63,8 @@ func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 	err := r.db.QueryRow(query, id).Scan(
 		&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Phone,
 		&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
-		&user.MinBudget, &user.MaxBudget, pq.Array(&user.InterestedProvinces),
-		pq.Array(&user.InterestedTypes), &user.AvatarURL, &user.Bio,
+		&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
+		pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
 		&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
 		&user.EmailVerificationToken, &user.PasswordResetToken,
 		&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
@@ -82,9 +83,9 @@ func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 // GetByEmail retrieves a user by email
 func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, phone, cedula, date_of_birth, 
-			   role, active, min_budget, max_budget, interested_provinces, 
-			   interested_types, avatar_url, bio, agency_id, password_hash, 
+		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
+			   user_type, active, min_budget, max_budget, preferred_provinces, 
+			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
 			   email_verified, email_verification_token, password_reset_token, 
 			   password_reset_expires, last_login, created_at, updated_at
 		FROM users 
@@ -94,8 +95,8 @@ func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 	err := r.db.QueryRow(query, email).Scan(
 		&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Phone,
 		&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
-		&user.MinBudget, &user.MaxBudget, pq.Array(&user.InterestedProvinces),
-		pq.Array(&user.InterestedTypes), &user.AvatarURL, &user.Bio,
+		&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
+		pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
 		&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
 		&user.EmailVerificationToken, &user.PasswordResetToken,
 		&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
@@ -111,23 +112,23 @@ func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 	return user, nil
 }
 
-// GetByCedula retrieves a user by cedula
-func (r *UserRepository) GetByCedula(cedula string) (*domain.User, error) {
+// GetByNationalID retrieves a user by national ID
+func (r *UserRepository) GetByNationalID(national_id string) (*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, phone, cedula, date_of_birth, 
-			   role, active, min_budget, max_budget, interested_provinces, 
-			   interested_types, avatar_url, bio, agency_id, password_hash, 
+		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
+			   user_type, active, min_budget, max_budget, preferred_provinces, 
+			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
 			   email_verified, email_verification_token, password_reset_token, 
 			   password_reset_expires, last_login, created_at, updated_at
 		FROM users 
-		WHERE cedula = $1`
+		WHERE national_id = $1`
 
 	user := &domain.User{}
-	err := r.db.QueryRow(query, cedula).Scan(
+	err := r.db.QueryRow(query, national_id).Scan(
 		&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Phone,
 		&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
-		&user.MinBudget, &user.MaxBudget, pq.Array(&user.InterestedProvinces),
-		pq.Array(&user.InterestedTypes), &user.AvatarURL, &user.Bio,
+		&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
+		pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
 		&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
 		&user.EmailVerificationToken, &user.PasswordResetToken,
 		&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
@@ -135,9 +136,9 @@ func (r *UserRepository) GetByCedula(cedula string) (*domain.User, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found with cedula: %s", cedula)
+			return nil, fmt.Errorf("user not found with national ID: %s", national_id)
 		}
-		return nil, fmt.Errorf("failed to get user by cedula: %w", err)
+		return nil, fmt.Errorf("failed to get user by national ID: %w", err)
 	}
 
 	return user, nil
@@ -148,9 +149,9 @@ func (r *UserRepository) Update(user *domain.User) error {
 	query := `
 		UPDATE users SET 
 			first_name = $2, last_name = $3, email = $4, phone = $5, 
-			cedula = $6, date_of_birth = $7, role = $8, active = $9, 
-			min_budget = $10, max_budget = $11, interested_provinces = $12, 
-			interested_types = $13, avatar_url = $14, bio = $15, agency_id = $16, 
+			national_id = $6, date_of_birth = $7, user_type = $8, active = $9, 
+			min_budget = $10, max_budget = $11, preferred_provinces = $12, 
+			preferred_property_types = $13, avatar_url = $14, bio = $15, agency_id = $16, 
 			password_hash = $17, email_verified = $18, email_verification_token = $19, 
 			password_reset_token = $20, password_reset_expires = $21, 
 			last_login = $22, updated_at = $23
@@ -159,8 +160,8 @@ func (r *UserRepository) Update(user *domain.User) error {
 	_, err := r.db.Exec(query,
 		user.ID, user.FirstName, user.LastName, user.Email, user.Phone,
 		user.Cedula, user.DateOfBirth, user.Role, user.Active,
-		user.MinBudget, user.MaxBudget, pq.Array(user.InterestedProvinces),
-		pq.Array(user.InterestedTypes), user.AvatarURL, user.Bio,
+		user.MinBudget, user.MaxBudget, pq.Array(user.PreferredProvinces),
+		pq.Array(user.PreferredPropertyTypes), user.AvatarURL, user.Bio,
 		user.AgencyID, user.PasswordHash, user.EmailVerified,
 		user.EmailVerificationToken, user.PasswordResetToken,
 		user.PasswordResetExpires, user.LastLogin, user.UpdatedAt,
@@ -183,16 +184,16 @@ func (r *UserRepository) Delete(id string) error {
 	return nil
 }
 
-// GetByRole retrieves users by role
-func (r *UserRepository) GetByRole(role domain.Role) ([]*domain.User, error) {
+// GetByUserType retrieves users by role
+func (r *UserRepository) GetByUserType(role domain.Role) ([]*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, phone, cedula, date_of_birth, 
-			   role, active, min_budget, max_budget, interested_provinces, 
-			   interested_types, avatar_url, bio, agency_id, password_hash, 
+		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
+			   user_type, active, min_budget, max_budget, preferred_provinces, 
+			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
 			   email_verified, email_verification_token, password_reset_token, 
 			   password_reset_expires, last_login, created_at, updated_at
 		FROM users 
-		WHERE role = $1 AND active = TRUE
+		WHERE user_type = $1 AND active = TRUE
 		ORDER BY created_at DESC`
 
 	rows, err := r.db.Query(query, role)
@@ -207,8 +208,8 @@ func (r *UserRepository) GetByRole(role domain.Role) ([]*domain.User, error) {
 		err := rows.Scan(
 			&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Phone,
 			&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
-			&user.MinBudget, &user.MaxBudget, pq.Array(&user.InterestedProvinces),
-			pq.Array(&user.InterestedTypes), &user.AvatarURL, &user.Bio,
+			&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
+			pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
 			&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
 			&user.EmailVerificationToken, &user.PasswordResetToken,
 			&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
@@ -225,9 +226,9 @@ func (r *UserRepository) GetByRole(role domain.Role) ([]*domain.User, error) {
 // GetByAgency retrieves users by agency ID
 func (r *UserRepository) GetByAgency(agencyID string) ([]*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, phone, cedula, date_of_birth, 
-			   role, active, min_budget, max_budget, interested_provinces, 
-			   interested_types, avatar_url, bio, agency_id, password_hash, 
+		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
+			   user_type, active, min_budget, max_budget, preferred_provinces, 
+			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
 			   email_verified, email_verification_token, password_reset_token, 
 			   password_reset_expires, last_login, created_at, updated_at
 		FROM users 
@@ -246,8 +247,8 @@ func (r *UserRepository) GetByAgency(agencyID string) ([]*domain.User, error) {
 		err := rows.Scan(
 			&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Phone,
 			&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
-			&user.MinBudget, &user.MaxBudget, pq.Array(&user.InterestedProvinces),
-			pq.Array(&user.InterestedTypes), &user.AvatarURL, &user.Bio,
+			&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
+			pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
 			&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
 			&user.EmailVerificationToken, &user.PasswordResetToken,
 			&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
@@ -265,9 +266,9 @@ func (r *UserRepository) GetByAgency(agencyID string) ([]*domain.User, error) {
 func (r *UserRepository) Search(params *domain.UserSearchParams) ([]*domain.User, int, error) {
 	// Build base query
 	baseQuery := `
-		SELECT id, first_name, last_name, email, phone, cedula, date_of_birth, 
-			   role, active, min_budget, max_budget, interested_provinces, 
-			   interested_types, avatar_url, bio, agency_id, password_hash, 
+		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
+			   user_type, active, min_budget, max_budget, preferred_provinces, 
+			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
 			   email_verified, email_verification_token, password_reset_token, 
 			   password_reset_expires, last_login, created_at, updated_at
 		FROM users WHERE 1=1`
@@ -286,7 +287,7 @@ func (r *UserRepository) Search(params *domain.UserSearchParams) ([]*domain.User
 	}
 
 	if params.Role != nil {
-		conditions = append(conditions, fmt.Sprintf(`role = $%d`, argIndex))
+		conditions = append(conditions, fmt.Sprintf(`user_type = $%d`, argIndex))
 		args = append(args, *params.Role)
 		argIndex++
 	}
@@ -304,7 +305,7 @@ func (r *UserRepository) Search(params *domain.UserSearchParams) ([]*domain.User
 	}
 
 	if len(params.Provinces) > 0 {
-		conditions = append(conditions, fmt.Sprintf(`interested_provinces && $%d`, argIndex))
+		conditions = append(conditions, fmt.Sprintf(`preferred_provinces && $%d`, argIndex))
 		args = append(args, pq.Array(params.Provinces))
 		argIndex++
 	}
@@ -355,8 +356,8 @@ func (r *UserRepository) Search(params *domain.UserSearchParams) ([]*domain.User
 		err := rows.Scan(
 			&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Phone,
 			&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
-			&user.MinBudget, &user.MaxBudget, pq.Array(&user.InterestedProvinces),
-			pq.Array(&user.InterestedTypes), &user.AvatarURL, &user.Bio,
+			&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
+			pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
 			&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
 			&user.EmailVerificationToken, &user.PasswordResetToken,
 			&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
@@ -373,13 +374,13 @@ func (r *UserRepository) Search(params *domain.UserSearchParams) ([]*domain.User
 // GetBuyersByBudget finds buyers who can afford a specific property price
 func (r *UserRepository) GetBuyersByBudget(price float64) ([]*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, phone, cedula, date_of_birth, 
-			   role, active, min_budget, max_budget, interested_provinces, 
-			   interested_types, avatar_url, bio, agency_id, password_hash, 
+		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
+			   user_type, active, min_budget, max_budget, preferred_provinces, 
+			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
 			   email_verified, email_verification_token, password_reset_token, 
 			   password_reset_expires, last_login, created_at, updated_at
 		FROM users 
-		WHERE role = 'buyer' AND active = TRUE 
+		WHERE user_type = 'buyer' AND active = TRUE 
 		  AND min_budget IS NOT NULL AND max_budget IS NOT NULL
 		  AND $1 >= min_budget AND $1 <= max_budget
 		ORDER BY max_budget DESC`
@@ -396,8 +397,8 @@ func (r *UserRepository) GetBuyersByBudget(price float64) ([]*domain.User, error
 		err := rows.Scan(
 			&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Phone,
 			&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
-			&user.MinBudget, &user.MaxBudget, pq.Array(&user.InterestedProvinces),
-			pq.Array(&user.InterestedTypes), &user.AvatarURL, &user.Bio,
+			&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
+			pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
 			&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
 			&user.EmailVerificationToken, &user.PasswordResetToken,
 			&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
@@ -417,11 +418,11 @@ func (r *UserRepository) GetStatistics() (*domain.UserStats, error) {
 		SELECT 
 			COUNT(*) as total_users,
 			COUNT(*) FILTER (WHERE active = TRUE) as active_users,
-			COUNT(*) FILTER (WHERE role = 'admin') as admin_count,
-			COUNT(*) FILTER (WHERE role = 'agency') as agency_count,
-			COUNT(*) FILTER (WHERE role = 'agent') as agent_count,
-			COUNT(*) FILTER (WHERE role = 'owner') as owner_count,
-			COUNT(*) FILTER (WHERE role = 'buyer') as buyer_count,
+			COUNT(*) FILTER (WHERE user_type = 'admin') as admin_count,
+			COUNT(*) FILTER (WHERE user_type = 'admin') as agency_count,
+			COUNT(*) FILTER (WHERE user_type = 'agent') as agent_count,
+			COUNT(*) FILTER (WHERE user_type = 'seller') as owner_count,
+			COUNT(*) FILTER (WHERE user_type = 'buyer') as buyer_count,
 			COUNT(*) FILTER (WHERE email_verified = TRUE) as email_verified,
 			COUNT(*) FILTER (WHERE min_budget IS NOT NULL AND max_budget IS NOT NULL) as with_budget,
 			COUNT(*) FILTER (WHERE agency_id IS NOT NULL) as associated_agents

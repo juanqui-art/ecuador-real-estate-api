@@ -96,7 +96,7 @@ make ci             # Pipeline completo
 
 ## 🏠 **CONTEXTO DEL PROYECTO**
 
-- **Versión:** v1.5.0-endpoint-expansion
+- **Versión:** v1.9.0-sistema-completo
 - **179 tests** con 90%+ cobertura
 - **9 endpoints funcionales + 48 pendientes** integración
 - **Sistema completo** de imágenes con cache LRU

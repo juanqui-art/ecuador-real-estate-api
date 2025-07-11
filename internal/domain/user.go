@@ -14,10 +14,10 @@ type UserRole string
 
 const (
 	RoleAdmin  UserRole = "admin"
-	RoleAgency UserRole = "agency"
 	RoleAgent  UserRole = "agent"
-	RoleOwner  UserRole = "owner"
 	RoleBuyer  UserRole = "buyer"
+	RoleOwner  UserRole = "seller"  // El schema DB tiene "seller" no "owner"
+	RoleAgency UserRole = "agency"  // Mantener para compatibilidad
 )
 
 // UserStatus represents the user account status
@@ -33,43 +33,50 @@ const (
 // User represents a system user with role-based access
 type User struct {
 	ID                      string     `json:"id" db:"id"`
-	Email                   string     `json:"email" db:"email"`
-	Name                    string     `json:"name" db:"name"`
 	FirstName               string     `json:"first_name" db:"first_name"`
 	LastName                string     `json:"last_name" db:"last_name"`
-	Cedula                  *string    `json:"cedula" db:"cedula"`
+	Email                   string     `json:"email" db:"email"`
 	Phone                   *string    `json:"phone" db:"phone"`
+	Cedula                  *string    `json:"cedula" db:"national_id"`
 	DateOfBirth             *time.Time `json:"date_of_birth" db:"date_of_birth"`
-	Role                    UserRole   `json:"role" db:"role"`
-	Status                  UserStatus `json:"status" db:"status"`
+	Role                    UserRole   `json:"role" db:"user_type"`
 	Active                  bool       `json:"active" db:"active"`
-	PasswordHash            string     `json:"-" db:"password_hash"`
-	EmailVerified           bool       `json:"email_verified" db:"email_verified"`
-	EmailVerificationToken  *string    `json:"-" db:"email_verification_token"`
-	PasswordResetToken      *string    `json:"-" db:"password_reset_token"`
-	PasswordResetExpires    *time.Time `json:"-" db:"password_reset_expires"`
-	LastLogin               *time.Time `json:"last_login" db:"last_login"`
-	AgencyID                *string    `json:"agency_id" db:"agency_id"`
-	Avatar                  *string    `json:"avatar" db:"avatar"`
-	AvatarURL               *string    `json:"avatar_url" db:"avatar_url"`
-	Bio                     *string    `json:"bio" db:"bio"`
 	MinBudget               *float64   `json:"min_budget" db:"min_budget"`
 	MaxBudget               *float64   `json:"max_budget" db:"max_budget"`
-	InterestedProvinces     []string   `json:"interested_provinces,omitempty"`
-	InterestedTypes         []string   `json:"interested_types,omitempty"`
-	LastLoginAt             *time.Time `json:"last_login_at" db:"last_login_at"`
+	PreferredProvinces      []string   `json:"preferred_provinces" db:"preferred_provinces"`
+	PreferredPropertyTypes  []string   `json:"preferred_property_types" db:"preferred_property_types"`
+	AvatarURL               *string    `json:"avatar_url" db:"avatar_url"`
+	Bio                     *string    `json:"bio" db:"bio"`
+	RealEstateCompanyID     *string    `json:"real_estate_company_id" db:"real_estate_company_id"`
+	ReceiveNotifications    bool       `json:"receive_notifications" db:"receive_notifications"`
+	ReceiveNewsletter       bool       `json:"receive_newsletter" db:"receive_newsletter"`
+	AgencyID                *string    `json:"agency_id" db:"agency_id"`
 	CreatedAt               time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt               time.Time  `json:"updated_at" db:"updated_at"`
-	DeletedAt               *time.Time `json:"deleted_at" db:"deleted_at"`
+	
+	// Additional fields for auth functionality (not in DB)
+	PasswordHash            string     `json:"-"`
+	EmailVerified           bool       `json:"email_verified"`
+	EmailVerificationToken  *string    `json:"-"`
+	PasswordResetToken      *string    `json:"-"`
+	PasswordResetExpires    *time.Time `json:"-"`
+	LastLogin               *time.Time `json:"last_login"`
+	LastLoginAt             *time.Time `json:"last_login_at"`
+	DeletedAt               *time.Time `json:"deleted_at"`
+	Status                  UserStatus `json:"status"`
 }
 
 // NewUser creates a new user with validation
-func NewUser(email, name string, role UserRole) (*User, error) {
+func NewUser(email, firstName, lastName string, role UserRole) (*User, error) {
 	if err := validateEmail(email); err != nil {
 		return nil, err
 	}
 
-	if err := validateName(name); err != nil {
+	if err := validateName(firstName); err != nil {
+		return nil, err
+	}
+
+	if err := validateName(lastName); err != nil {
 		return nil, err
 	}
 
@@ -78,13 +85,17 @@ func NewUser(email, name string, role UserRole) (*User, error) {
 	}
 
 	user := &User{
-		ID:        uuid.New().String(),
-		Email:     strings.ToLower(strings.TrimSpace(email)),
-		Name:      strings.TrimSpace(name),
-		Role:      role,
-		Status:    StatusPending,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:                   uuid.New().String(),
+		Email:                strings.ToLower(strings.TrimSpace(email)),
+		FirstName:            strings.TrimSpace(firstName),
+		LastName:             strings.TrimSpace(lastName),
+		Role:                 role,
+		Status:               StatusPending,
+		Active:               true,
+		ReceiveNotifications: true,
+		ReceiveNewsletter:    false,
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
 	}
 
 	return user, nil
@@ -100,7 +111,11 @@ func (u *User) IsValid() error {
 		return err
 	}
 
-	if err := validateName(u.Name); err != nil {
+	if err := validateName(u.FirstName); err != nil {
+		return err
+	}
+
+	if err := validateName(u.LastName); err != nil {
 		return err
 	}
 
@@ -361,5 +376,10 @@ func (u *User) GetFullName() string {
 	if u.FirstName != "" && u.LastName != "" {
 		return u.FirstName + " " + u.LastName
 	}
-	return u.Name
+	return u.FirstName
+}
+
+// Name returns the full name (alias for GetFullName)
+func (u *User) Name() string {
+	return u.GetFullName()
 }
