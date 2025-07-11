@@ -20,8 +20,8 @@ type MockPropertyService struct {
 	mock.Mock
 }
 
-func (m *MockPropertyService) CreateProperty(title, description, province, city, propertyType string, price float64) (*domain.Property, error) {
-	args := m.Called(title, description, province, city, propertyType, price)
+func (m *MockPropertyService) CreateProperty(title, description, province, city, propertyType string, price float64, parkingSpaces int) (*domain.Property, error) {
+	args := m.Called(title, description, province, city, propertyType, price, parkingSpaces)
 	return args.Get(0).(*domain.Property), args.Error(1)
 }
 
@@ -77,6 +77,11 @@ func (m *MockPropertyService) SetPropertyFeatured(id string, featured bool) erro
 
 func (m *MockPropertyService) AddPropertyTag(id, tag string) error {
 	args := m.Called(id, tag)
+	return args.Error(0)
+}
+
+func (m *MockPropertyService) SetPropertyParkingSpaces(id string, parkingSpaces int) error {
+	args := m.Called(id, parkingSpaces)
 	return args.Error(0)
 }
 
@@ -141,6 +146,7 @@ func createTestProperty() *domain.Property {
 		"Samborondón",
 		"house",
 		285000,
+		"owner-123",
 	)
 }
 
@@ -175,7 +181,7 @@ func TestPropertyHandler_CreateProperty(t *testing.T) {
 			},
 			mockSetup: func(m *MockPropertyService) {
 				property := createTestProperty()
-				m.On("CreateProperty", "Beautiful house in Samborondón", "Modern house with pool", "Guayas", "Samborondón", "house", 285000.0).
+				m.On("CreateProperty", "Beautiful house in Samborondón", "Modern house with pool", "Guayas", "Samborondón", "house", 285000.0, 0).
 					Return(property, nil)
 			},
 			expectedStatus: http.StatusCreated,
@@ -220,7 +226,7 @@ func TestPropertyHandler_CreateProperty(t *testing.T) {
 				Price:       100000,
 			},
 			mockSetup: func(m *MockPropertyService) {
-				m.On("CreateProperty", "Invalid Property", "Description", "InvalidProvince", "City", "house", 100000.0).
+				m.On("CreateProperty", "Invalid Property", "Description", "InvalidProvince", "City", "house", 100000.0, 0).
 					Return((*domain.Property)(nil), errors.New("invalid province: InvalidProvince"))
 			},
 			expectedStatus: http.StatusBadRequest,
@@ -1506,7 +1512,7 @@ func TestPropertyHandler_ErrorResponse(t *testing.T) {
 	var errorResp ErrorResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &errorResp)
 	assert.NoError(t, err)
-	assert.Equal(t, "Not Found", errorResp.Error)
+	assert.False(t, errorResp.Success)
 	assert.Contains(t, errorResp.Message, "property not found")
 	
 	mockService.AssertExpectations(t)

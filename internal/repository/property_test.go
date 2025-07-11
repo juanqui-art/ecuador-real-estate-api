@@ -158,12 +158,16 @@ func TestPostgreSQLPropertyRepository_GetByID(t *testing.T) {
 					"price_per_m2", "year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				}).AddRow(
 					"test-id", "test-slug", "Test Title", "Test Description", 100000.0, "Guayas", "Samborondón",
 					nil, nil, nil, nil, "approximate", "house", "available", 3, 2.5, 150.0, nil,
 					`[]`, nil, nil, nil, nil, nil, nil, nil, "used", false, false, false, false,
-					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(),
+					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil, 0,
+					nil, nil, nil, nil, nil,
 				)
 				mock.ExpectQuery(`SELECT .+ FROM properties WHERE id = \$1`).
 					WithArgs("test-id").
@@ -246,12 +250,16 @@ func TestPostgreSQLPropertyRepository_GetBySlug(t *testing.T) {
 					"price_per_m2", "year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				}).AddRow(
 					"test-id", "test-slug-12345678", "Test Title", "Test Description", 100000.0, "Guayas", "Samborondón",
 					nil, nil, nil, nil, "approximate", "house", "available", 3, 2.5, 150.0, nil,
 					`[]`, nil, nil, nil, nil, nil, nil, nil, "used", false, false, false, false,
-					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(),
+					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil, 0,
+					nil, nil, nil, nil, nil,
 				)
 				mock.ExpectQuery(`SELECT .+ FROM properties WHERE slug = \$1`).
 					WithArgs("test-slug-12345678").
@@ -321,17 +329,20 @@ func TestPostgreSQLPropertyRepository_GetAll(t *testing.T) {
 					"price_per_m2", "year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				}).AddRow(
 					"id1", "slug1", "Title 1", "Description 1", 100000.0, "Guayas", "Samborondón",
 					nil, nil, nil, nil, "approximate", "house", "available", 3, 2.5, 150.0, nil,
 					`[]`, nil, nil, nil, nil, nil, nil, nil, "used", false, false, false, false,
-					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(),
+					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil,
 				).AddRow(
 					"id2", "slug2", "Title 2", "Description 2", 200000.0, "Pichincha", "Quito",
 					nil, nil, nil, nil, "approximate", "apartment", "available", 2, 2.0, 80.0, nil,
 					`[]`, nil, nil, nil, nil, nil, nil, nil, "used", false, false, false, false,
-					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(),
+					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil,
 				)
 				mock.ExpectQuery(`SELECT .+ FROM properties ORDER BY featured DESC, created_at DESC`).
 					WillReturnRows(rows)
@@ -350,7 +361,8 @@ func TestPostgreSQLPropertyRepository_GetAll(t *testing.T) {
 					"price_per_m2", "year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				})
 				mock.ExpectQuery(`SELECT .+ FROM properties ORDER BY featured DESC, created_at DESC`).
 					WillReturnRows(rows)
@@ -582,12 +594,14 @@ func TestPostgreSQLPropertyRepository_GetByProvince(t *testing.T) {
 					"price_per_m2", "year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				}).AddRow(
 					"id1", "slug1", "Title 1", "Description 1", 100000.0, "Guayas", "Samborondón",
 					nil, nil, nil, nil, "approximate", "house", "available", 3, 2.5, 150.0, nil,
 					`[]`, nil, nil, nil, nil, nil, nil, nil, "used", false, false, false, false,
-					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(),
+					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil,
 				)
 				mock.ExpectQuery(`SELECT .+ FROM properties WHERE province = \$1 ORDER BY featured DESC, created_at DESC`).
 					WithArgs("Guayas").
@@ -608,7 +622,8 @@ func TestPostgreSQLPropertyRepository_GetByProvince(t *testing.T) {
 					"price_per_m2", "year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				})
 				mock.ExpectQuery(`SELECT .+ FROM properties WHERE province = \$1 ORDER BY featured DESC, created_at DESC`).
 					WithArgs("Loja").
@@ -677,12 +692,14 @@ func TestPostgreSQLPropertyRepository_GetByPriceRange(t *testing.T) {
 					"price_per_m2", "year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				}).AddRow(
 					"id1", "slug1", "Title 1", "Description 1", 200000.0, "Guayas", "Samborondón",
 					nil, nil, nil, nil, "approximate", "house", "available", 3, 2.5, 150.0, nil,
 					`[]`, nil, nil, nil, nil, nil, nil, nil, "used", false, false, false, false,
-					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(),
+					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil,
 				)
 				mock.ExpectQuery(`SELECT .+ FROM properties WHERE price >= \$1 AND price <= \$2 ORDER BY featured DESC, created_at DESC`).
 					WithArgs(100000.0, 300000.0).
@@ -704,7 +721,8 @@ func TestPostgreSQLPropertyRepository_GetByPriceRange(t *testing.T) {
 					"price_per_m2", "year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				})
 				mock.ExpectQuery(`SELECT .+ FROM properties WHERE price >= \$1 AND price <= \$2 ORDER BY featured DESC, created_at DESC`).
 					WithArgs(500000.0, 1000000.0).
@@ -766,12 +784,14 @@ func TestScanProperty(t *testing.T) {
 		"price_per_m2", "year_built", "floors", "property_status", "furnished",
 		"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 		"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-		"created_at", "updated_at",
+		"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 	}).AddRow(
 		"test-id", "test-slug", "Test Title", "Test Description", 100000.0, "Guayas", "Samborondón",
 		"Test Sector", "Test Address", -2.1667, -79.9, "exact", "house", "available", 3, 2.5, 150.0, "main.jpg",
 		`["image1.jpg","image2.jpg"]`, "video.mp4", "tour360.html", 1200.0, 150.0, 666.67, 2020, 2, "new", true,
-		true, true, true, true, true, true, true, true, `["luxury","pool","garden"]`, true, 25, "company-id", time.Now(), time.Now(),
+		true, true, true, true, true, true, true, true, `["luxury","pool","garden"]`, true, 25, "company-id", time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil,
 	)
 
 	mock.ExpectQuery(`SELECT .+ FROM properties WHERE id = \$1`).
@@ -812,12 +832,14 @@ func TestJSONHandling(t *testing.T) {
 		"price_per_m2", "year_built", "floors", "property_status", "furnished",
 		"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 		"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
-		"created_at", "updated_at",
+		"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 	}).AddRow(
 		"test-id", "test-slug", "Test Title", "Test Description", 100000.0, "Guayas", "Samborondón",
 		nil, nil, nil, nil, "approximate", "house", "available", 3, 2.5, 150.0, nil,
 		`invalid json`, nil, nil, nil, nil, nil, nil, nil, "used", false, false, false, false,
-		false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(),
+		false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil,
 	)
 
 	mock.ExpectQuery(`SELECT .+ FROM properties WHERE id = \$1`).

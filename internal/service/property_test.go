@@ -108,6 +108,71 @@ func (m *MockPropertyRepository) AdvancedSearchPaginated(params repository.Advan
 	return args.Get(0).([]repository.PropertySearchResult), args.Int(1), args.Error(2)
 }
 
+// MockImageRepository is a mock implementation of ImageRepository
+type MockImageRepository struct {
+	mock.Mock
+}
+
+func (m *MockImageRepository) Create(imageInfo *domain.ImageInfo) error {
+	args := m.Called(imageInfo)
+	return args.Error(0)
+}
+
+func (m *MockImageRepository) GetByID(id string) (*domain.ImageInfo, error) {
+	args := m.Called(id)
+	return args.Get(0).(*domain.ImageInfo), args.Error(1)
+}
+
+func (m *MockImageRepository) GetByPropertyID(propertyID string) ([]domain.ImageInfo, error) {
+	args := m.Called(propertyID)
+	return args.Get(0).([]domain.ImageInfo), args.Error(1)
+}
+
+func (m *MockImageRepository) Update(imageInfo *domain.ImageInfo) error {
+	args := m.Called(imageInfo)
+	return args.Error(0)
+}
+
+func (m *MockImageRepository) Delete(id string) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *MockImageRepository) GetPaginatedImages(pagination *domain.PaginationParams) ([]domain.ImageInfo, int, error) {
+	args := m.Called(pagination)
+	return args.Get(0).([]domain.ImageInfo), args.Int(1), args.Error(2)
+}
+
+func (m *MockImageRepository) UpdateSortOrder(propertyID string, imageIDs []string) error {
+	args := m.Called(propertyID, imageIDs)
+	return args.Error(0)
+}
+
+func (m *MockImageRepository) GetMainImage(propertyID string) (*domain.ImageInfo, error) {
+	args := m.Called(propertyID)
+	return args.Get(0).(*domain.ImageInfo), args.Error(1)
+}
+
+func (m *MockImageRepository) SetMainImage(propertyID, imageID string) error {
+	args := m.Called(propertyID, imageID)
+	return args.Error(0)
+}
+
+func (m *MockImageRepository) GetImageCount(propertyID string) (int, error) {
+	args := m.Called(propertyID)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockImageRepository) GetImagesByFormat(format string) ([]domain.ImageInfo, error) {
+	args := m.Called(format)
+	return args.Get(0).([]domain.ImageInfo), args.Error(1)
+}
+
+func (m *MockImageRepository) GetImageStats() (map[string]interface{}, error) {
+	args := m.Called()
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
 // Helper function to create a test property
 func createTestProperty() *domain.Property {
 	return domain.NewProperty(
@@ -117,12 +182,14 @@ func createTestProperty() *domain.Property {
 		"Samborondón",
 		"house",
 		285000,
+		"owner-123",
 	)
 }
 
 func TestNewPropertyService(t *testing.T) {
 	mockRepo := &MockPropertyRepository{}
-	service := NewPropertyService(mockRepo)
+	mockImageRepo := &MockImageRepository{}
+	service := NewPropertyService(mockRepo, mockImageRepo)
 	
 	assert.NotNil(t, service)
 	assert.Equal(t, mockRepo, service.repo)
@@ -234,7 +301,7 @@ func TestPropertyService_CreateProperty(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			property, err := service.CreateProperty(
 				tt.title,
@@ -243,6 +310,7 @@ func TestPropertyService_CreateProperty(t *testing.T) {
 				tt.city,
 				tt.propertyType,
 				tt.price,
+				0, // parkingSpaces
 			)
 
 			if tt.wantError {
@@ -304,8 +372,13 @@ func TestPropertyService_GetProperty(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
+			mockImageRepo := &MockImageRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			
+			// Set up image repository mock for enrichment
+			mockImageRepo.On("GetByPropertyID", mock.AnythingOfType("string")).Return([]domain.ImageInfo{}, nil)
+			
+			service := NewPropertyService(mockRepo, mockImageRepo)
 
 			property, err := service.GetProperty(tt.id)
 
@@ -372,7 +445,7 @@ func TestPropertyService_GetPropertyBySlug(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			property, err := service.GetPropertyBySlug(tt.slug)
 
@@ -434,7 +507,7 @@ func TestPropertyService_ListProperties(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			properties, err := service.ListProperties()
 
@@ -520,7 +593,7 @@ func TestPropertyService_UpdateProperty(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			property, err := service.UpdateProperty(
 				tt.id,
@@ -603,7 +676,7 @@ func TestPropertyService_DeleteProperty(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			err := service.DeleteProperty(tt.id)
 
@@ -669,7 +742,7 @@ func TestPropertyService_FilterByProvince(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			properties, err := service.FilterByProvince(tt.province)
 
@@ -751,7 +824,7 @@ func TestPropertyService_FilterByPriceRange(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			properties, err := service.FilterByPriceRange(tt.minPrice, tt.maxPrice)
 
@@ -840,7 +913,7 @@ func TestPropertyService_GetStatistics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			stats, err := service.GetStatistics()
 
@@ -916,7 +989,7 @@ func TestPropertyService_SetPropertyLocation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			err := service.SetPropertyLocation(tt.id, tt.latitude, tt.longitude, tt.precision)
 
@@ -980,7 +1053,7 @@ func TestPropertyService_SetPropertyFeatured(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			err := service.SetPropertyFeatured(tt.id, tt.featured)
 
@@ -1044,7 +1117,7 @@ func TestPropertyService_AddPropertyTag(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			err := service.AddPropertyTag(tt.id, tt.tag)
 
@@ -1116,7 +1189,7 @@ func TestPropertyService_SearchProperties_Legacy(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockImageRepository{})
 
 			properties, err := service.SearchProperties(tt.query)
 
@@ -1135,7 +1208,7 @@ func TestPropertyService_SearchProperties_Legacy(t *testing.T) {
 }
 
 func TestPropertyService_validatePropertyData(t *testing.T) {
-	service := NewPropertyService(&MockPropertyRepository{})
+	service := NewPropertyService(&MockPropertyRepository{}, &MockImageRepository{})
 
 	tests := []struct {
 		name          string

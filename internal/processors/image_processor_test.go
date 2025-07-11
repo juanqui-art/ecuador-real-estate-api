@@ -578,7 +578,7 @@ func TestImageProcessor_Integration(t *testing.T) {
 		require.NotNil(t, stats)
 		
 		// Verify the result is a valid image
-		_, _, err = processor.GetImageDimensions(result)
+		_, _, _, err = processor.GetImageDimensions(result)
 		assert.NoError(t, err)
 		
 		// Verify processing reduced file size
@@ -599,7 +599,7 @@ func TestImageProcessor_Integration(t *testing.T) {
 		require.NotNil(t, stats)
 		
 		// Verify the result is a valid image
-		_, _, err = processor.GetImageDimensions(result)
+		_, _, _, err = processor.GetImageDimensions(result)
 		assert.NoError(t, err)
 		
 		// Verify size is within reasonable bounds

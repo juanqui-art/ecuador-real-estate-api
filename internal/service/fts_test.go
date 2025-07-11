@@ -107,6 +107,59 @@ func (m *MockFTSPropertyRepository) AdvancedSearchPaginated(params repository.Ad
 	return args.Get(0).([]repository.PropertySearchResult), args.Int(1), args.Error(2)
 }
 
+// MockFTSImageRepository is a minimal mock for the ImageRepository
+type MockFTSImageRepository struct {
+	mock.Mock
+}
+
+func (m *MockFTSImageRepository) Create(imageInfo *domain.ImageInfo) error {
+	return nil
+}
+
+func (m *MockFTSImageRepository) GetByID(id string) (*domain.ImageInfo, error) {
+	return nil, nil
+}
+
+func (m *MockFTSImageRepository) GetByPropertyID(propertyID string) ([]domain.ImageInfo, error) {
+	return nil, nil
+}
+
+func (m *MockFTSImageRepository) Update(imageInfo *domain.ImageInfo) error {
+	return nil
+}
+
+func (m *MockFTSImageRepository) Delete(id string) error {
+	return nil
+}
+
+func (m *MockFTSImageRepository) GetPaginatedImages(pagination *domain.PaginationParams) ([]domain.ImageInfo, int, error) {
+	return nil, 0, nil
+}
+
+func (m *MockFTSImageRepository) UpdateSortOrder(propertyID string, imageIDs []string) error {
+	return nil
+}
+
+func (m *MockFTSImageRepository) GetMainImage(propertyID string) (*domain.ImageInfo, error) {
+	return nil, nil
+}
+
+func (m *MockFTSImageRepository) SetMainImage(propertyID, imageID string) error {
+	return nil
+}
+
+func (m *MockFTSImageRepository) GetImageCount(propertyID string) (int, error) {
+	return 0, nil
+}
+
+func (m *MockFTSImageRepository) GetImagesByFormat(format string) ([]domain.ImageInfo, error) {
+	return nil, nil
+}
+
+func (m *MockFTSImageRepository) GetImageStats() (map[string]interface{}, error) {
+	return nil, nil
+}
+
 func TestPropertyService_SearchProperties_FTS(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -166,7 +219,7 @@ func TestPropertyService_SearchProperties_FTS(t *testing.T) {
 			mockRepo := &MockFTSPropertyRepository{}
 			tt.mockSetup(mockRepo)
 
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockFTSImageRepository{})
 			results, err := service.SearchProperties(tt.query)
 
 			if tt.wantError {
@@ -256,7 +309,7 @@ func TestPropertyService_SearchPropertiesRanked(t *testing.T) {
 			mockRepo := &MockFTSPropertyRepository{}
 			tt.mockSetup(mockRepo)
 
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockFTSImageRepository{})
 			results, err := service.SearchPropertiesRanked(tt.query, tt.limit)
 
 			if tt.wantError {
@@ -326,7 +379,7 @@ func TestPropertyService_GetSearchSuggestions(t *testing.T) {
 			mockRepo := &MockFTSPropertyRepository{}
 			tt.mockSetup(mockRepo)
 
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockFTSImageRepository{})
 			suggestions, err := service.GetSearchSuggestions(tt.query, tt.limit)
 
 			if tt.wantError {
@@ -452,7 +505,7 @@ func TestPropertyService_AdvancedSearch(t *testing.T) {
 			mockRepo := &MockFTSPropertyRepository{}
 			tt.mockSetup(mockRepo)
 
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockFTSImageRepository{})
 			results, err := service.AdvancedSearch(tt.params)
 
 			if tt.wantError {
@@ -484,7 +537,7 @@ func TestPropertyService_AdvancedSearch_ParameterNormalization(t *testing.T) {
 
 	mockRepo.On("AdvancedSearch", expectedParams).Return([]repository.PropertySearchResult{}, nil)
 
-	service := NewPropertyService(mockRepo)
+	service := NewPropertyService(mockRepo, &MockFTSImageRepository{})
 	_, err := service.AdvancedSearch(params)
 
 	assert.NoError(t, err)
@@ -524,7 +577,7 @@ func TestPropertyService_SearchPropertiesRanked_LimitNormalization(t *testing.T)
 			mockRepo := &MockFTSPropertyRepository{}
 			mockRepo.On("SearchPropertiesRanked", "test", tt.expectedLimit).Return([]repository.PropertySearchResult{}, nil)
 
-			service := NewPropertyService(mockRepo)
+			service := NewPropertyService(mockRepo, &MockFTSImageRepository{})
 			_, err := service.SearchPropertiesRanked("test", tt.inputLimit)
 
 			assert.NoError(t, err)

@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"realty-core/internal/cache"
+	"realty-core/internal/handlers"
+	"realty-core/internal/middleware"
 	"realty-core/internal/processors"
 	"realty-core/internal/repository"
 	"realty-core/internal/service"
-	"realty-core/internal/handlers"
 	"realty-core/internal/storage"
 
 	"github.com/joho/godotenv"
@@ -77,14 +78,18 @@ func main() {
 
 	// Configure routes
 	router := configureRoutesWithPagination(propertyHandler, imageHandler, userHandler, agencyHandler, paginationHandler)
+	
+	// Apply performance monitoring middleware
+	finalHandler := middleware.PerformanceLogger(router)
 
-	// Configure HTTP server
+	// Configure HTTP server with optimized settings
 	server := &http.Server{
 		Addr:         ":" + port,
-		Handler:      addMiddleware(router),
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		Handler:      addMiddleware(finalHandler),
+		ReadTimeout:  10 * time.Second,  // Shorter read timeout for better responsiveness
+		WriteTimeout: 30 * time.Second,  // Longer write timeout for large responses
+		IdleTimeout:  120 * time.Second, // Longer idle timeout for persistent connections
+		MaxHeaderBytes: 1 << 20,         // 1MB max header size
 	}
 
 	log.Printf("🚀 Server started at http://localhost:%s", port)

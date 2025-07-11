@@ -472,7 +472,7 @@ func (s *AgencyService) TransferAgentToAgency(agentID, fromAgencyID, toAgencyID 
 		return fmt.Errorf("failed to update agent: %w", err)
 	}
 
-	s.logger.Printf("Agent %s transferred from %s to %s", agent.Name, fromAgency.Name, toAgency.Name)
+	s.logger.Printf("Agent %s transferred from %s to %s", agent.Name(), fromAgency.Name, toAgency.Name)
 	return nil
 }
 

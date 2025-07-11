@@ -69,7 +69,7 @@ func (s *UserServiceSimple) CreateUser(firstName, lastName, email, phone, cedula
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	s.logger.Printf("User created successfully: %s (%s)", user.Name, user.Email)
+	s.logger.Printf("User created successfully: %s (%s)", user.Name(), user.Email)
 	return user, nil
 }
 
@@ -106,7 +106,7 @@ func (s *UserServiceSimple) UpdateUser(user *domain.User) error {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 
-	s.logger.Printf("User updated successfully: %s", user.Name)
+	s.logger.Printf("User updated successfully: %s", user.Name())
 	return nil
 }
 
@@ -131,7 +131,7 @@ func (s *UserServiceSimple) DeleteUser(id string) error {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
 
-	s.logger.Printf("User deleted successfully: %s", user.Name)
+	s.logger.Printf("User deleted successfully: %s", user.Name())
 	return nil
 }
 

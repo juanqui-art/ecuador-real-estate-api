@@ -39,13 +39,15 @@ func TestPostgreSQLPropertyRepository_SearchProperties(t *testing.T) {
 					"year_built", "floors", "property_status", "furnished",
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator", "air_conditioning",
 					"tags", "featured", "view_count", "real_estate_company_id",
-					"created_at", "updated_at",
+					"created_at", "updated_at", "parking_spaces",
+					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				}).AddRow(
 					"123e4567-e89b-12d3-a456-426614174000", "casa-moderna", "Casa moderna", "Descripción", 285000.0,
 					"Guayas", "Samborondón", "", "", 0.0, 0.0, "", "house", "available", 4, 3.5, 320.0,
 					"", "[]", "", "", 0.0, 0.0, 0.0, 0, 0, "", false,
 					false, false, false, false, false, false, false, false,
-					"[]", false, 0, "", time.Now(), time.Now(),
+					"[]", false, 0, "", time.Now(), time.Now(), 0,
+					nil, nil, nil, nil, nil,
 				)
 				mock.ExpectQuery(`SELECT .+ FROM properties`).
 					WithArgs("casa moderna", 10).

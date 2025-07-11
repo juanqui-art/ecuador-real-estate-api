@@ -13,7 +13,8 @@ func TestNewUser(t *testing.T) {
 	tests := []struct {
 		name        string
 		email       string
-		userName    string
+		firstName   string
+		lastName    string
 		role        UserRole
 		expectError bool
 		errorMsg    string
@@ -21,28 +22,32 @@ func TestNewUser(t *testing.T) {
 		{
 			name:        "valid owner user",
 			email:       "juan@example.com",
-			userName:    "Juan Pérez",
+			firstName:   "Juan",
+			lastName:    "Pérez",
 			role:        RoleOwner,
 			expectError: false,
 		},
 		{
 			name:        "valid agent user",
 			email:       "agent@realty.com",
-			userName:    "María López",
+			firstName:   "María",
+			lastName:    "López",
 			role:        RoleAgent,
 			expectError: false,
 		},
 		{
 			name:        "valid buyer user",
 			email:       "buyer@gmail.com",
-			userName:    "Carlos Ruiz",
+			firstName:   "Carlos",
+			lastName:    "Ruiz",
 			role:        RoleBuyer,
 			expectError: false,
 		},
 		{
 			name:        "invalid email format",
 			email:       "invalid-email",
-			userName:    "Test User",
+			firstName:   "Test",
+			lastName:    "User",
 			role:        RoleOwner,
 			expectError: true,
 			errorMsg:    "invalid email format",
@@ -50,23 +55,35 @@ func TestNewUser(t *testing.T) {
 		{
 			name:        "empty email",
 			email:       "",
-			userName:    "Test User",
+			firstName:   "Test",
+			lastName:    "User",
 			role:        RoleOwner,
 			expectError: true,
 			errorMsg:    "email cannot be empty",
 		},
 		{
-			name:        "empty name",
+			name:        "empty first name",
 			email:       "test@example.com",
-			userName:    "",
+			firstName:   "",
+			lastName:    "User",
 			role:        RoleOwner,
 			expectError: true,
 			errorMsg:    "name cannot be empty",
 		},
 		{
-			name:        "short name",
+			name:        "empty last name",
 			email:       "test@example.com",
-			userName:    "A",
+			firstName:   "Test",
+			lastName:    "",
+			role:        RoleOwner,
+			expectError: true,
+			errorMsg:    "name cannot be empty",
+		},
+		{
+			name:        "short first name",
+			email:       "test@example.com",
+			firstName:   "A",
+			lastName:    "User",
 			role:        RoleOwner,
 			expectError: true,
 			errorMsg:    "name must be at least 2 characters long",
@@ -74,7 +91,8 @@ func TestNewUser(t *testing.T) {
 		{
 			name:        "invalid role",
 			email:       "test@example.com",
-			userName:    "Test User",
+			firstName:   "Test",
+			lastName:    "User",
 			role:        UserRole("invalid"),
 			expectError: true,
 			errorMsg:    "invalid role",
@@ -83,7 +101,7 @@ func TestNewUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user, err := NewUser(tt.email, tt.userName, tt.role)
+			user, err := NewUser(tt.email, tt.firstName, tt.lastName, tt.role)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -94,7 +112,8 @@ func TestNewUser(t *testing.T) {
 				require.NotNil(t, user)
 				assert.NotEmpty(t, user.ID)
 				assert.Equal(t, tt.email, user.Email)
-				assert.Equal(t, tt.userName, user.Name)
+				assert.Equal(t, tt.firstName, user.FirstName)
+				assert.Equal(t, tt.lastName, user.LastName)
 				assert.Equal(t, tt.role, user.Role)
 				assert.Equal(t, StatusPending, user.Status)
 				assert.NotZero(t, user.CreatedAt)
@@ -117,7 +136,8 @@ func TestUserIsValid(t *testing.T) {
 			user: &User{
 				ID:        uuid.New().String(),
 				Email:     "owner@example.com",
-				Name:      "Property Owner",
+				FirstName: "Property",
+				LastName:  "Owner",
 				Role:      RoleOwner,
 				Status:    StatusActive,
 				CreatedAt: time.Now(),
@@ -130,7 +150,8 @@ func TestUserIsValid(t *testing.T) {
 			user: &User{
 				ID:        uuid.New().String(),
 				Email:     "agent@realty.com",
-				Name:      "Real Estate Agent",
+				FirstName: "Real Estate",
+				LastName:  "Agent",
 				Role:      RoleAgent,
 				Status:    StatusActive,
 				AgencyID:  stringPtr(uuid.New().String()),
@@ -144,7 +165,8 @@ func TestUserIsValid(t *testing.T) {
 			user: &User{
 				ID:        uuid.New().String(),
 				Email:     "agent@realty.com",
-				Name:      "Real Estate Agent",
+				FirstName: "Real Estate",
+				LastName:  "Agent",
 				Role:      RoleAgent,
 				Status:    StatusActive,
 				AgencyID:  nil,
@@ -159,7 +181,8 @@ func TestUserIsValid(t *testing.T) {
 			user: &User{
 				ID:        uuid.New().String(),
 				Email:     "owner@example.com",
-				Name:      "Property Owner",
+				FirstName: "Property",
+				LastName:  "Owner",
 				Role:      RoleOwner,
 				Status:    StatusActive,
 				AgencyID:  stringPtr(uuid.New().String()),
@@ -174,7 +197,8 @@ func TestUserIsValid(t *testing.T) {
 			user: &User{
 				ID:        "",
 				Email:     "test@example.com",
-				Name:      "Test User",
+				FirstName: "Test",
+				LastName:  "User",
 				Role:      RoleOwner,
 				Status:    StatusActive,
 				CreatedAt: time.Now(),
