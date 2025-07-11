@@ -247,6 +247,7 @@ func TestImageInfo_Validate(t *testing.T) {
 			image: &ImageInfo{
 				PropertyID: "test-property",
 				FileName:   "test.jpg",
+				Quality:    50, // Set valid quality to avoid triggering quality error first
 				SortOrder:  -1,
 			},
 			wantErr: true,

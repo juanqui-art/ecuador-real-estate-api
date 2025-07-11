@@ -259,7 +259,7 @@ func GetImageSizeCategory(size int64) string {
 
 // Common image processing constants
 const (
-	MaxUploadSize     = 10 * 1024 * 1024 // 10MB
+	MaxUploadSize     = int64(10 * 1024 * 1024) // 10MB
 	MaxImageWidth     = 4000
 	MaxImageHeight    = 4000
 	DefaultQuality    = 85

@@ -98,6 +98,12 @@ func TestPostgreSQLPropertyRepository_Create(t *testing.T) {
 						sqlmock.AnyArg(), // real_estate_company_id
 						sqlmock.AnyArg(), // created_at
 						sqlmock.AnyArg(), // updated_at
+						sqlmock.AnyArg(), // parking_spaces
+						sqlmock.AnyArg(), // owner_id
+						sqlmock.AnyArg(), // agent_id
+						sqlmock.AnyArg(), // agency_id
+						sqlmock.AnyArg(), // created_by
+						sqlmock.AnyArg(), // updated_by
 					).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			},

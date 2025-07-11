@@ -444,8 +444,13 @@ func TestPropertyService_GetPropertyBySlug(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &MockPropertyRepository{}
+			mockImageRepo := &MockImageRepository{}
 			tt.mockSetup(mockRepo)
-			service := NewPropertyService(mockRepo, &MockImageRepository{})
+			
+			// Configure image repository mock to return empty slice for all properties
+			mockImageRepo.On("GetByPropertyID", mock.AnythingOfType("string")).Return([]domain.ImageInfo{}, nil)
+			
+			service := NewPropertyService(mockRepo, mockImageRepo)
 
 			property, err := service.GetPropertyBySlug(tt.slug)
 
@@ -461,6 +466,7 @@ func TestPropertyService_GetPropertyBySlug(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
+			mockImageRepo.AssertExpectations(t)
 		})
 	}
 }

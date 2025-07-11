@@ -488,8 +488,8 @@ func TestImageProcessor_calculateDimensions(t *testing.T) {
 				MaxHeight:      0,
 				PreserveAspect: true,
 			},
-			wantWidth:  1920,
-			wantHeight: 1600,
+			wantWidth:  1296, // 3000 * (1080/2500) = 1296
+			wantHeight: 1080, // 2500 * (1080/2500) = 1080
 		},
 	}
 	
