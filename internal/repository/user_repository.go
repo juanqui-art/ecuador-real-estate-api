@@ -53,9 +53,8 @@ func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 	query := `
 		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
 			   user_type, active, min_budget, max_budget, preferred_provinces, 
-			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
-			   email_verified, email_verification_token, password_reset_token, 
-			   password_reset_expires, last_login, created_at, updated_at
+			   preferred_property_types, avatar_url, bio, real_estate_company_id,
+			   receive_notifications, receive_newsletter, agency_id, created_at, updated_at
 		FROM users 
 		WHERE id = $1`
 
@@ -65,9 +64,8 @@ func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 		&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
 		&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
 		pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
-		&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
-		&user.EmailVerificationToken, &user.PasswordResetToken,
-		&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
+		&user.RealEstateCompanyID, &user.ReceiveNotifications, &user.ReceiveNewsletter,
+		&user.AgencyID, &user.CreatedAt, &user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -85,9 +83,8 @@ func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 	query := `
 		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
 			   user_type, active, min_budget, max_budget, preferred_provinces, 
-			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
-			   email_verified, email_verification_token, password_reset_token, 
-			   password_reset_expires, last_login, created_at, updated_at
+			   preferred_property_types, avatar_url, bio, real_estate_company_id,
+			   receive_notifications, receive_newsletter, agency_id, created_at, updated_at
 		FROM users 
 		WHERE email = $1`
 
@@ -97,9 +94,8 @@ func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 		&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
 		&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
 		pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
-		&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
-		&user.EmailVerificationToken, &user.PasswordResetToken,
-		&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
+		&user.RealEstateCompanyID, &user.ReceiveNotifications, &user.ReceiveNewsletter,
+		&user.AgencyID, &user.CreatedAt, &user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -117,9 +113,8 @@ func (r *UserRepository) GetByNationalID(national_id string) (*domain.User, erro
 	query := `
 		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
 			   user_type, active, min_budget, max_budget, preferred_provinces, 
-			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
-			   email_verified, email_verification_token, password_reset_token, 
-			   password_reset_expires, last_login, created_at, updated_at
+			   preferred_property_types, avatar_url, bio, real_estate_company_id,
+			   receive_notifications, receive_newsletter, agency_id, created_at, updated_at
 		FROM users 
 		WHERE national_id = $1`
 
@@ -129,9 +124,8 @@ func (r *UserRepository) GetByNationalID(national_id string) (*domain.User, erro
 		&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
 		&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
 		pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
-		&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
-		&user.EmailVerificationToken, &user.PasswordResetToken,
-		&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
+		&user.RealEstateCompanyID, &user.ReceiveNotifications, &user.ReceiveNewsletter,
+		&user.AgencyID, &user.CreatedAt, &user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -151,10 +145,9 @@ func (r *UserRepository) Update(user *domain.User) error {
 			first_name = $2, last_name = $3, email = $4, phone = $5, 
 			national_id = $6, date_of_birth = $7, user_type = $8, active = $9, 
 			min_budget = $10, max_budget = $11, preferred_provinces = $12, 
-			preferred_property_types = $13, avatar_url = $14, bio = $15, agency_id = $16, 
-			password_hash = $17, email_verified = $18, email_verification_token = $19, 
-			password_reset_token = $20, password_reset_expires = $21, 
-			last_login = $22, updated_at = $23
+			preferred_property_types = $13, avatar_url = $14, bio = $15, 
+			real_estate_company_id = $16, receive_notifications = $17, 
+			receive_newsletter = $18, agency_id = $19, updated_at = $20
 		WHERE id = $1`
 
 	_, err := r.db.Exec(query,
@@ -162,9 +155,8 @@ func (r *UserRepository) Update(user *domain.User) error {
 		user.Cedula, user.DateOfBirth, user.Role, user.Active,
 		user.MinBudget, user.MaxBudget, pq.Array(user.PreferredProvinces),
 		pq.Array(user.PreferredPropertyTypes), user.AvatarURL, user.Bio,
-		user.AgencyID, user.PasswordHash, user.EmailVerified,
-		user.EmailVerificationToken, user.PasswordResetToken,
-		user.PasswordResetExpires, user.LastLogin, user.UpdatedAt,
+		user.RealEstateCompanyID, user.ReceiveNotifications, user.ReceiveNewsletter,
+		user.AgencyID, user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -185,13 +177,12 @@ func (r *UserRepository) Delete(id string) error {
 }
 
 // GetByUserType retrieves users by role
-func (r *UserRepository) GetByUserType(role domain.Role) ([]*domain.User, error) {
+func (r *UserRepository) GetByUserType(role domain.UserRole) ([]*domain.User, error) {
 	query := `
 		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
 			   user_type, active, min_budget, max_budget, preferred_provinces, 
-			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
-			   email_verified, email_verification_token, password_reset_token, 
-			   password_reset_expires, last_login, created_at, updated_at
+			   preferred_property_types, avatar_url, bio, real_estate_company_id,
+			   receive_notifications, receive_newsletter, agency_id, created_at, updated_at
 		FROM users 
 		WHERE user_type = $1 AND active = TRUE
 		ORDER BY created_at DESC`
@@ -210,9 +201,8 @@ func (r *UserRepository) GetByUserType(role domain.Role) ([]*domain.User, error)
 			&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
 			&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
 			pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
-			&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
-			&user.EmailVerificationToken, &user.PasswordResetToken,
-			&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
+			&user.RealEstateCompanyID, &user.ReceiveNotifications, &user.ReceiveNewsletter,
+			&user.AgencyID, &user.CreatedAt, &user.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan user: %w", err)
@@ -228,9 +218,8 @@ func (r *UserRepository) GetByAgency(agencyID string) ([]*domain.User, error) {
 	query := `
 		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
 			   user_type, active, min_budget, max_budget, preferred_provinces, 
-			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
-			   email_verified, email_verification_token, password_reset_token, 
-			   password_reset_expires, last_login, created_at, updated_at
+			   preferred_property_types, avatar_url, bio, real_estate_company_id,
+			   receive_notifications, receive_newsletter, agency_id, created_at, updated_at
 		FROM users 
 		WHERE agency_id = $1 AND active = TRUE
 		ORDER BY first_name, last_name`
@@ -249,9 +238,8 @@ func (r *UserRepository) GetByAgency(agencyID string) ([]*domain.User, error) {
 			&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
 			&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
 			pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
-			&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
-			&user.EmailVerificationToken, &user.PasswordResetToken,
-			&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
+			&user.RealEstateCompanyID, &user.ReceiveNotifications, &user.ReceiveNewsletter,
+			&user.AgencyID, &user.CreatedAt, &user.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan user: %w", err)
@@ -268,9 +256,8 @@ func (r *UserRepository) Search(params *domain.UserSearchParams) ([]*domain.User
 	baseQuery := `
 		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
 			   user_type, active, min_budget, max_budget, preferred_provinces, 
-			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
-			   email_verified, email_verification_token, password_reset_token, 
-			   password_reset_expires, last_login, created_at, updated_at
+			   preferred_property_types, avatar_url, bio, real_estate_company_id,
+			   receive_notifications, receive_newsletter, agency_id, created_at, updated_at
 		FROM users WHERE 1=1`
 
 	countQuery := `SELECT COUNT(*) FROM users WHERE 1=1`
@@ -358,9 +345,8 @@ func (r *UserRepository) Search(params *domain.UserSearchParams) ([]*domain.User
 			&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
 			&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
 			pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
-			&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
-			&user.EmailVerificationToken, &user.PasswordResetToken,
-			&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
+			&user.RealEstateCompanyID, &user.ReceiveNotifications, &user.ReceiveNewsletter,
+			&user.AgencyID, &user.CreatedAt, &user.UpdatedAt,
 		)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan user: %w", err)
@@ -376,9 +362,8 @@ func (r *UserRepository) GetBuyersByBudget(price float64) ([]*domain.User, error
 	query := `
 		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
 			   user_type, active, min_budget, max_budget, preferred_provinces, 
-			   preferred_property_types, avatar_url, bio, agency_id, password_hash, 
-			   email_verified, email_verification_token, password_reset_token, 
-			   password_reset_expires, last_login, created_at, updated_at
+			   preferred_property_types, avatar_url, bio, real_estate_company_id,
+			   receive_notifications, receive_newsletter, agency_id, created_at, updated_at
 		FROM users 
 		WHERE user_type = 'buyer' AND active = TRUE 
 		  AND min_budget IS NOT NULL AND max_budget IS NOT NULL
@@ -399,9 +384,8 @@ func (r *UserRepository) GetBuyersByBudget(price float64) ([]*domain.User, error
 			&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
 			&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
 			pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
-			&user.AgencyID, &user.PasswordHash, &user.EmailVerified,
-			&user.EmailVerificationToken, &user.PasswordResetToken,
-			&user.PasswordResetExpires, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
+			&user.RealEstateCompanyID, &user.ReceiveNotifications, &user.ReceiveNewsletter,
+			&user.AgencyID, &user.CreatedAt, &user.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan user: %w", err)
@@ -419,11 +403,10 @@ func (r *UserRepository) GetStatistics() (*domain.UserStats, error) {
 			COUNT(*) as total_users,
 			COUNT(*) FILTER (WHERE active = TRUE) as active_users,
 			COUNT(*) FILTER (WHERE user_type = 'admin') as admin_count,
-			COUNT(*) FILTER (WHERE user_type = 'admin') as agency_count,
+			COUNT(*) FILTER (WHERE user_type = 'agency') as agency_count,
 			COUNT(*) FILTER (WHERE user_type = 'agent') as agent_count,
 			COUNT(*) FILTER (WHERE user_type = 'seller') as owner_count,
 			COUNT(*) FILTER (WHERE user_type = 'buyer') as buyer_count,
-			COUNT(*) FILTER (WHERE email_verified = TRUE) as email_verified,
 			COUNT(*) FILTER (WHERE min_budget IS NOT NULL AND max_budget IS NOT NULL) as with_budget,
 			COUNT(*) FILTER (WHERE agency_id IS NOT NULL) as associated_agents
 		FROM users`
@@ -432,8 +415,7 @@ func (r *UserRepository) GetStatistics() (*domain.UserStats, error) {
 	err := r.db.QueryRow(query).Scan(
 		&stats.TotalUsers, &stats.ActiveUsers, &stats.AdminCount,
 		&stats.AgencyCount, &stats.AgentCount, &stats.OwnerCount,
-		&stats.BuyerCount, &stats.EmailVerified, &stats.WithBudget,
-		&stats.AssociatedAgents,
+		&stats.BuyerCount, &stats.WithBudget, &stats.AssociatedAgents,
 	)
 
 	if err != nil {
@@ -443,46 +425,52 @@ func (r *UserRepository) GetStatistics() (*domain.UserStats, error) {
 	return stats, nil
 }
 
-// SetEmailVerified sets the email verification status
+// SetEmailVerified sets the email verification status (placeholder - auth fields not in schema)
 func (r *UserRepository) SetEmailVerified(userID string, verified bool) error {
+	// Note: email_verified field does not exist in the actual database schema
+	// This is a placeholder for future authentication implementation
 	query := `
 		UPDATE users 
-		SET email_verified = $2, email_verification_token = NULL, updated_at = $3
-		WHERE id = $1`
-
-	_, err := r.db.Exec(query, userID, verified, time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set email verified: %w", err)
-	}
-
-	return nil
-}
-
-// SetPasswordResetToken sets the password reset token and expiry
-func (r *UserRepository) SetPasswordResetToken(userID, token string, expiry time.Time) error {
-	query := `
-		UPDATE users 
-		SET password_reset_token = $2, password_reset_expires = $3, updated_at = $4
-		WHERE id = $1`
-
-	_, err := r.db.Exec(query, userID, token, expiry, time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to set password reset token: %w", err)
-	}
-
-	return nil
-}
-
-// ClearPasswordResetToken clears the password reset token
-func (r *UserRepository) ClearPasswordResetToken(userID string) error {
-	query := `
-		UPDATE users 
-		SET password_reset_token = NULL, password_reset_expires = NULL, updated_at = $2
+		SET updated_at = $2
 		WHERE id = $1`
 
 	_, err := r.db.Exec(query, userID, time.Now())
 	if err != nil {
-		return fmt.Errorf("failed to clear password reset token: %w", err)
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+
+	return nil
+}
+
+// SetPasswordResetToken sets the password reset token and expiry (placeholder - auth fields not in schema)
+func (r *UserRepository) SetPasswordResetToken(userID, token string, expiry time.Time) error {
+	// Note: password_reset_token fields do not exist in the actual database schema
+	// This is a placeholder for future authentication implementation
+	query := `
+		UPDATE users 
+		SET updated_at = $2
+		WHERE id = $1`
+
+	_, err := r.db.Exec(query, userID, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+
+	return nil
+}
+
+// ClearPasswordResetToken clears the password reset token (placeholder - auth fields not in schema)
+func (r *UserRepository) ClearPasswordResetToken(userID string) error {
+	// Note: password_reset_token fields do not exist in the actual database schema
+	// This is a placeholder for future authentication implementation
+	query := `
+		UPDATE users 
+		SET updated_at = $2
+		WHERE id = $1`
+
+	_, err := r.db.Exec(query, userID, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
 	}
 
 	return nil
@@ -493,10 +481,10 @@ func (r *UserRepository) UpdateLastLogin(userID string) error {
 	now := time.Now()
 	query := `
 		UPDATE users 
-		SET last_login = $2, updated_at = $3
+		SET updated_at = $2
 		WHERE id = $1`
 
-	_, err := r.db.Exec(query, userID, now, now)
+	_, err := r.db.Exec(query, userID, now)
 	if err != nil {
 		return fmt.Errorf("failed to update last login: %w", err)
 	}

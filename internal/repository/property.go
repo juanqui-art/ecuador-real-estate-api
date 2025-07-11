@@ -99,11 +99,12 @@ func (r *PostgreSQLPropertyRepository) Create(property *domain.Property) error {
 			year_built, floors, property_status, furnished,
 			garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			tags, featured, view_count, real_estate_company_id,
+			owner_id, agent_id, agency_id, created_by, updated_by,
 			created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
 			$18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32,
-			$33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43
+			$33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48
 		)
 	`
 
@@ -119,6 +120,7 @@ func (r *PostgreSQLPropertyRepository) Create(property *domain.Property) error {
 		property.Garage, property.Pool, property.Garden, property.Terrace, property.Balcony,
 		property.Security, property.Elevator, property.AirConditioning,
 		string(tagsJSON), property.Featured, property.ViewCount, property.RealEstateCompanyID,
+		property.OwnerID, property.AgentID, property.AgencyID, property.CreatedBy, property.UpdatedBy,
 		property.CreatedAt, property.UpdatedAt,
 	)
 
@@ -140,6 +142,7 @@ func (r *PostgreSQLPropertyRepository) GetByID(id string) (*domain.Property, err
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		WHERE id = $1
@@ -159,6 +162,7 @@ func (r *PostgreSQLPropertyRepository) GetByID(id string) (*domain.Property, err
 		&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
 		&property.Security, &property.Elevator, &property.AirConditioning,
 		&tagsJSON, &property.Featured, &property.ViewCount, &property.RealEstateCompanyID,
+		&property.OwnerID, &property.AgentID, &property.AgencyID, &property.CreatedBy, &property.UpdatedBy,
 		&property.CreatedAt, &property.UpdatedAt,
 	)
 
@@ -197,6 +201,7 @@ func (r *PostgreSQLPropertyRepository) GetBySlug(slug string) (*domain.Property,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		WHERE slug = $1
@@ -216,6 +221,7 @@ func (r *PostgreSQLPropertyRepository) GetBySlug(slug string) (*domain.Property,
 		&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
 		&property.Security, &property.Elevator, &property.AirConditioning,
 		&tagsJSON, &property.Featured, &property.ViewCount, &property.RealEstateCompanyID,
+		&property.OwnerID, &property.AgentID, &property.AgencyID, &property.CreatedBy, &property.UpdatedBy,
 		&property.CreatedAt, &property.UpdatedAt,
 	)
 
@@ -254,6 +260,7 @@ func (r *PostgreSQLPropertyRepository) GetAll() ([]domain.Property, error) {
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		ORDER BY featured DESC, created_at DESC
@@ -282,6 +289,7 @@ func (r *PostgreSQLPropertyRepository) GetAll() ([]domain.Property, error) {
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
 			&property.Security, &property.Elevator, &property.AirConditioning,
 			&tagsJSON, &property.Featured, &property.ViewCount, &property.RealEstateCompanyID,
+			&property.OwnerID, &property.AgentID, &property.AgencyID, &property.CreatedBy, &property.UpdatedBy,
 			&property.CreatedAt, &property.UpdatedAt,
 		)
 		if err != nil {
@@ -403,11 +411,12 @@ func (r *PostgreSQLPropertyRepository) GetByProvince(province string) ([]domain.
 	query := `
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		WHERE province = $1
@@ -437,6 +446,7 @@ func (r *PostgreSQLPropertyRepository) GetByProvince(province string) ([]domain.
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
 			&property.Security, &property.Elevator, &property.AirConditioning,
 			&tagsJSON, &property.Featured, &property.ViewCount, &property.RealEstateCompanyID,
+			&property.OwnerID, &property.AgentID, &property.AgencyID, &property.CreatedBy, &property.UpdatedBy,
 			&property.CreatedAt, &property.UpdatedAt,
 		)
 		if err != nil {
@@ -462,11 +472,12 @@ func (r *PostgreSQLPropertyRepository) GetByPriceRange(minPrice, maxPrice float6
 	query := `
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		WHERE price >= $1 AND price <= $2
@@ -496,6 +507,7 @@ func (r *PostgreSQLPropertyRepository) GetByPriceRange(minPrice, maxPrice float6
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
 			&property.Security, &property.Elevator, &property.AirConditioning,
 			&tagsJSON, &property.Featured, &property.ViewCount, &property.RealEstateCompanyID,
+			&property.OwnerID, &property.AgentID, &property.AgencyID, &property.CreatedBy, &property.UpdatedBy,
 			&property.CreatedAt, &property.UpdatedAt,
 		)
 		if err != nil {
@@ -525,11 +537,12 @@ func (r *PostgreSQLPropertyRepository) SearchProperties(query string, limit int)
 	sqlQuery := `
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		WHERE search_vector @@ plainto_tsquery('spanish', $1)
@@ -562,6 +575,7 @@ func (r *PostgreSQLPropertyRepository) SearchProperties(query string, limit int)
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
 			&property.Security, &property.Elevator, &property.AirConditioning,
 			&tagsJSON, &property.Featured, &property.ViewCount, &property.RealEstateCompanyID,
+			&property.OwnerID, &property.AgentID, &property.AgencyID, &property.CreatedBy, &property.UpdatedBy,
 			&property.CreatedAt, &property.UpdatedAt,
 		)
 		if err != nil {
@@ -738,11 +752,12 @@ func (r *PostgreSQLPropertyRepository) GetAllPaginated(pagination *domain.Pagina
 	query := fmt.Sprintf(`
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		ORDER BY %s
@@ -777,11 +792,12 @@ func (r *PostgreSQLPropertyRepository) GetByProvincePaginated(province string, p
 	query := fmt.Sprintf(`
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		WHERE province = $1
@@ -817,11 +833,12 @@ func (r *PostgreSQLPropertyRepository) GetByPriceRangePaginated(minPrice, maxPri
 	query := fmt.Sprintf(`
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		WHERE price >= $1 AND price <= $2
@@ -857,11 +874,12 @@ func (r *PostgreSQLPropertyRepository) SearchPropertiesPaginated(query string, p
 	sqlQuery := fmt.Sprintf(`
 		SELECT id, slug, title, description, price, province, city, sector, address,
 			   latitude, longitude, location_precision, type, status, bedrooms, bathrooms, area_m2,
-			   main_image, images, video_tour, tour_360,
+			   parking_spaces, main_image, images, video_tour, tour_360,
 			   rent_price, common_expenses, price_per_m2,
 			   year_built, floors, property_status, furnished,
 			   garage, pool, garden, terrace, balcony, security, elevator, air_conditioning,
 			   tags, featured, view_count, real_estate_company_id,
+			   owner_id, agent_id, agency_id, created_by, updated_by,
 			   created_at, updated_at
 		FROM properties 
 		WHERE search_vector @@ plainto_tsquery('spanish', $1)
@@ -1033,6 +1051,7 @@ func (r *PostgreSQLPropertyRepository) scanProperties(rows *sql.Rows) ([]domain.
 			&property.Garage, &property.Pool, &property.Garden, &property.Terrace, &property.Balcony,
 			&property.Security, &property.Elevator, &property.AirConditioning,
 			&tagsJSON, &property.Featured, &property.ViewCount, &property.RealEstateCompanyID,
+			&property.OwnerID, &property.AgentID, &property.AgencyID, &property.CreatedBy, &property.UpdatedBy,
 			&property.CreatedAt, &property.UpdatedAt,
 		)
 		if err != nil {

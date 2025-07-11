@@ -22,6 +22,7 @@ func createTestProperty() *domain.Property {
 		"Samborondón",
 		"house",
 		285000,
+		"owner-123",
 	)
 }
 

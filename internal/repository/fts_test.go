@@ -321,6 +321,7 @@ func TestPropertySearchResult_Structure(t *testing.T) {
 		"Guayaquil",
 		"house",
 		285000,
+		"owner-123",
 	)
 
 	result := PropertySearchResult{
