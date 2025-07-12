@@ -1,0 +1,101 @@
+🚀 Iniciando Benchmark de Performance - Modo: mem
+⚙️  Configuración: 100 requests, 10 concurrency, timeout 30s
+=                                                                               =
+✅ Servidor conectado correctamente
+
+🔄 Testeando: List Properties
+  📊 Resultados para List Properties:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 1.975582ms
+     ⚡ Requests/seg: 506.14
+     🧠 Memoria usada: 0.01 MB
+     📈 Min/Max: 773.125µs / 3.511709ms
+
+🔄 Testeando: Search Properties Ranked
+  📊 Resultados para Search Properties Ranked:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 222.806µs
+     ⚡ Requests/seg: 4485.39
+     🧠 Memoria usada: 0.01 MB
+     📈 Min/Max: 169.833µs / 461.583µs
+
+🔄 Testeando: Filter Properties by Province
+  📊 Resultados para Filter Properties by Province:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 459.075µs
+     ⚡ Requests/seg: 2177.86
+     🧠 Memoria usada: 0.00 MB
+     📈 Min/Max: 404.875µs / 612.667µs
+
+🔄 Testeando: Property Statistics
+  📊 Resultados para Property Statistics:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 224.395µs
+     ⚡ Requests/seg: 4454.65
+     🧠 Memoria usada: 0.00 MB
+     📈 Min/Max: 191.916µs / 327.667µs
+
+🔄 Testeando: Paginated Properties
+  📊 Resultados para Paginated Properties:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 1.06624ms
+     ⚡ Requests/seg: 937.71
+     🧠 Memoria usada: 0.00 MB
+     📈 Min/Max: 974.625µs / 1.282792ms
+
+🔄 Testeando: Image Statistics
+  📊 Resultados para Image Statistics:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 476.032µs
+     ⚡ Requests/seg: 2100.11
+     🧠 Memoria usada: 0.00 MB
+     📈 Min/Max: 392.75µs / 727.375µs
+
+🔄 Testeando: User Statistics
+  📊 Resultados para User Statistics:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 1.182317ms
+     ⚡ Requests/seg: 845.71
+     🧠 Memoria usada: 0.01 MB
+     📈 Min/Max: 1.046917ms / 2.790167ms
+
+🔄 Testeando: Agency Statistics
+  📊 Resultados para Agency Statistics:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 215.36µs
+     ⚡ Requests/seg: 4640.99
+     🧠 Memoria usada: 0.00 MB
+     📈 Min/Max: 176.334µs / 409.875µs
+
+🔄 Testeando: Health Check
+  📊 Resultados para Health Check:
+     ✅ Success: 100/100 (100.0%)
+     ⏱️  Tiempo promedio: 67.312µs
+     ⚡ Requests/seg: 14834.96
+     🧠 Memoria usada: 0.00 MB
+     📈 Min/Max: 46.25µs / 122.417µs
+
+📈 REPORTE FINAL DE PERFORMANCE
+=                                                                               =
+Endpoint                  | Success% | Avg Time |    Req/Sec |   Mem MB
+                                                                               -
+List Properties           |   100.0% | 1.975582ms |   506.14 |   0.01
+Search Properties Ranked  |   100.0% | 222.806µs |  4485.39 |   0.01
+Filter Properties by P... |   100.0% | 459.075µs |  2177.86 |   0.00
+Property Statistics       |   100.0% | 224.395µs |  4454.65 |   0.00
+Paginated Properties      |   100.0% | 1.06624ms |   937.71 |   0.00
+Image Statistics          |   100.0% | 476.032µs |  2100.11 |   0.00
+User Statistics           |   100.0% | 1.182317ms |   845.71 |   0.01
+Agency Statistics         |   100.0% | 215.36µs |  4640.99 |   0.00
+Health Check              |   100.0% | 67.312µs | 14834.96 |   0.00
+                                                                               -
+TOTALES: 900 requests, 100.0% success, 3887.06 avg req/sec
+
+💻 INFORMACIÓN DEL SISTEMA
+=                                                                               =
+OS: darwin
+Arch: arm64
+CPUs: 10
+Go Version: go1.24.4
+Memoria asignada: 0.31 MB
+Total asignaciones: 10.50 MB

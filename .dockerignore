@@ -1,0 +1,93 @@
+# Git files
+.git
+.gitignore
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows files
+Desktop.ini
+
+# Test files and coverage
+*_test.go
+coverage.out
+coverage.html
+*.prof
+test-results/
+
+# Documentation files
+README.md
+docs/
+*.md
+LICENSE
+
+# Build artifacts
+bin/
+dist/
+*.exe
+inmobiliaria
+
+# Benchmark and profiling results
+benchmark_results/
+*.pprof
+*.svg
+*.pdf
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Node.js (if any frontend assets)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Go specific
+vendor/
+*.so
+*.dylib
+*.dll
+
+# Docker files (to avoid recursion)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Development tools
+tools/
+scripts/
+Makefile
+
+# Migration files (these should be handled separately)
+migrations/
+
+# Test data
+testdata/
+fixtures/

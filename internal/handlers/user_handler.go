@@ -50,8 +50,8 @@ type UpdateUserRequest struct {
 	Bio       string `json:"bio"`
 }
 
-// LoginRequest represents the login request
-type LoginRequest struct {
+// UserLoginRequest represents the login request (used by old handler)
+type UserLoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }

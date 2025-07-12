@@ -131,6 +131,59 @@ func (c *LRUCache) Set(key string, value interface{}, size int64) {
 	c.evictIfNeeded()
 }
 
+// SetWithTTL adds/updates a key-value pair with a custom TTL
+func (c *LRUCache) SetWithTTL(key string, value interface{}, size int64, ttl time.Duration) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	
+	// Don't store items that exceed max size on their own
+	if size > c.maxSize {
+		// If it's an update of an existing key, remove the old entry
+		if node, exists := c.cache[key]; exists {
+			c.currentSize -= node.Size
+			c.removeNode(node)
+			delete(c.cache, key)
+		}
+		return
+	}
+	
+	customTTL := ttl
+	if customTTL <= 0 {
+		customTTL = c.ttl // Use default if invalid TTL provided
+	}
+	
+	if node, exists := c.cache[key]; exists {
+		// Update existing node with custom TTL
+		oldSize := node.Size
+		node.Value = value
+		node.Size = size
+		node.Timestamp = time.Now()
+		
+		c.currentSize = c.currentSize - oldSize + size
+		c.moveToFront(node)
+		
+		// Check if we need to evict due to size limit
+		c.evictIfNeeded()
+		return
+	}
+	
+	// Create new node with custom TTL
+	newNode := &LRUNode{
+		Key:       key,
+		Value:     value,
+		Size:      size,
+		Timestamp: time.Now(),
+	}
+	
+	// Add to cache
+	c.cache[key] = newNode
+	c.currentSize += size
+	c.addToFront(newNode)
+	
+	// Check if we need to evict
+	c.evictIfNeeded()
+}
+
 // Delete removes a key from the cache
 func (c *LRUCache) Delete(key string) bool {
 	c.mutex.Lock()
@@ -303,6 +356,7 @@ type CacheStats struct {
 type CacheInterface interface {
 	Get(key string) (interface{}, bool)
 	Set(key string, value interface{}, size int64)
+	SetWithTTL(key string, value interface{}, size int64, ttl time.Duration)
 	Delete(key string) bool
 	Clear()
 	Size() int

@@ -1,0 +1,192 @@
+# Docker Compose configuration for production deployment
+# This configuration is optimized for production use with security and performance considerations
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: realty-core-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-inmobiliaria_db}
+      POSTGRES_USER: ${POSTGRES_USER:-inmobiliaria_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password is required}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - realty-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-inmobiliaria_user} -d ${POSTGRES_DB:-inmobiliaria_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Realty Core Application
+  app:
+    image: ${REALTY_IMAGE:-realty-core:1.9.0}
+    container_name: realty-core-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inmobiliaria_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-inmobiliaria_db}?sslmode=disable
+      
+      # Application configuration
+      PORT: 8080
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ENV: production
+      
+      # Cache configuration
+      CACHE_ENABLED: ${CACHE_ENABLED:-true}
+      CACHE_SIZE_MB: ${CACHE_SIZE_MB:-50}
+      
+      # Upload configuration
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-10485760}  # 10MB
+      
+      # Security configuration
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+      
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - app_data:/data
+      - ./uploads:/app/uploads:rw
+    networks:
+      - realty-network
+    healthcheck:
+      test: ["/inmobiliaria", "-health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+
+  # Redis Cache (optional, for session storage or additional caching)
+  redis:
+    image: redis:7-alpine
+    container_name: realty-core-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-realty_cache_pass}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - realty-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+    profiles:
+      - with-redis
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: realty-core-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - realty-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
+        reservations:
+          memory: 32M
+          cpus: '0.1'
+    profiles:
+      - with-nginx
+
+# Networks
+networks:
+  realty-network:
+    driver: bridge
+    name: realty-core-network
+
+# Volumes
+volumes:
+  postgres_data:
+    driver: local
+    name: realty-core-postgres-data
+  
+  redis_data:
+    driver: local
+    name: realty-core-redis-data
+  
+  app_data:
+    driver: local
+    name: realty-core-app-data
+  
+  nginx_logs:
+    driver: local
+    name: realty-core-nginx-logs
+
+# Secrets (for Docker Swarm or sensitive data)
+secrets:
+  postgres_password:
+    external: true
+  redis_password:
+    external: true

@@ -165,14 +165,12 @@ func TestPostgreSQLPropertyRepository_GetByID(t *testing.T) {
 					"garage", "pool", "garden", "terrace", "balcony", "security", "elevator",
 					"air_conditioning", "tags", "featured", "view_count", "real_estate_company_id",
 					"created_at", "updated_at", "parking_spaces",
-					"owner_id", "agent_id", "agency_id", "created_by", "updated_by", "parking_spaces",
 					"owner_id", "agent_id", "agency_id", "created_by", "updated_by",
 				}).AddRow(
 					"test-id", "test-slug", "Test Title", "Test Description", 100000.0, "Guayas", "Samborondón",
 					nil, nil, nil, nil, "approximate", "house", "available", 3, 2.5, 150.0, nil,
 					`[]`, nil, nil, nil, nil, nil, nil, nil, "used", false, false, false, false,
 					false, false, false, false, false, `[]`, false, 0, nil, time.Now(), time.Now(), 0,
-					nil, nil, nil, nil, nil, 0,
 					nil, nil, nil, nil, nil,
 				)
 				mock.ExpectQuery(`SELECT .+ FROM properties WHERE id = \$1`).

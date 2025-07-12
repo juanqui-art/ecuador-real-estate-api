@@ -1,0 +1,76 @@
+# Multi-stage Docker build with Google's distroless base image
+# More secure alternative to scratch image
+FROM golang:1.24-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
+
+# Copy go mod files for better layer caching
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download && go mod verify
+
+# Copy source code
+COPY . .
+
+# Build the application with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags='-w -s -extldflags "-static"' \
+    -a -installsuffix cgo \
+    -o inmobiliaria \
+    ./cmd/server
+
+# Stage 2: Runtime stage with distroless
+FROM gcr.io/distroless/static-debian12:nonroot
+
+# Copy timezone data
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+# Copy the built binary
+COPY --from=builder /app/inmobiliaria /inmobiliaria
+
+# Expose application port
+EXPOSE 8080
+
+# Health check (using built-in health check command)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD ["/inmobiliaria", "-health-check"]
+
+# Set metadata labels
+LABEL maintainer="Juan Quizhpi <juan@example.com>" \
+      description="Realty Core - Sistema de gestión inmobiliaria (Distroless)" \
+      version="1.9.0" \
+      org.opencontainers.image.title="realty-core-distroless" \
+      org.opencontainers.image.description="Sistema de gestión inmobiliaria para Ecuador (Distroless)" \
+      org.opencontainers.image.version="1.9.0" \
+      org.opencontainers.image.vendor="Realty Core" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.base.name="gcr.io/distroless/static-debian12:nonroot"
+
+# Environment variables
+ENV PORT=8080 \
+    LOG_LEVEL=info \
+    ENV=production
+
+# Use nonroot user (already configured in distroless image)
+USER nonroot:nonroot
+
+# Define startup command
+ENTRYPOINT ["/inmobiliaria"]
+
+# Document expected volumes and environment variables
+VOLUME ["/data"]
+
+# Required environment variables:
+# - DATABASE_URL: PostgreSQL connection string
+# Optional environment variables:
+# - PORT: Application port (default: 8080)
+# - LOG_LEVEL: Logging level (default: info)
+# - ENV: Environment (default: production)
+# - MAX_UPLOAD_SIZE: Max file upload size (default: 10MB)
+# - CACHE_ENABLED: Enable LRU cache (default: true)
+# - CACHE_SIZE_MB: Cache size in MB (default: 50)

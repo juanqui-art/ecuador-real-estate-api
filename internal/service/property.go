@@ -3,7 +3,9 @@ package service
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"realty-core/internal/cache"
 	"realty-core/internal/domain"
 	"realty-core/internal/repository"
 )
@@ -41,13 +43,34 @@ type PropertyServiceInterface interface {
 type PropertyService struct {
 	repo      repository.PropertyRepository
 	imageRepo repository.ImageRepository
+	cache     *cache.PropertyCache
 }
 
 // NewPropertyService creates a new instance of the service
 func NewPropertyService(repo repository.PropertyRepository, imageRepo repository.ImageRepository) *PropertyService {
+	// Create cache with default configuration
+	cacheConfig := cache.PropertyCacheConfig{
+		Enabled:       true,
+		Capacity:      1000,
+		MaxSizeBytes:  50 * 1024 * 1024, // 50MB
+		DefaultTTL:    5 * time.Minute,
+		SearchTTL:     1 * time.Minute,
+		StatisticsTTL: 15 * time.Minute,
+	}
+	
 	return &PropertyService{
 		repo:      repo,
 		imageRepo: imageRepo,
+		cache:     cache.NewPropertyCache(cacheConfig),
+	}
+}
+
+// NewPropertyServiceWithCache creates a new instance of the service with custom cache
+func NewPropertyServiceWithCache(repo repository.PropertyRepository, imageRepo repository.ImageRepository, propertyCache *cache.PropertyCache) *PropertyService {
+	return &PropertyService{
+		repo:      repo,
+		imageRepo: imageRepo,
+		cache:     propertyCache,
 	}
 }
 
@@ -88,6 +111,10 @@ func (s *PropertyService) CreateProperty(title, description, province, city, pro
 		return nil, fmt.Errorf("error creating property: %w", err)
 	}
 
+	// Invalidate caches since we added a new property
+	s.cache.InvalidateSearchResults()
+	s.cache.InvalidateStatistics()
+
 	return property, nil
 }
 
@@ -97,6 +124,14 @@ func (s *PropertyService) GetProperty(id string) (*domain.Property, error) {
 		return nil, fmt.Errorf("property ID required")
 	}
 
+	// Try to get from cache first
+	if cachedProperty, found := s.cache.GetProperty(id); found {
+		// Enrich with image data and return cached property
+		s.enrichPropertyWithImages(cachedProperty)
+		return cachedProperty, nil
+	}
+
+	// Cache miss - get from database
 	property, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving property: %w", err)
@@ -105,9 +140,12 @@ func (s *PropertyService) GetProperty(id string) (*domain.Property, error) {
 	// Enrich property with image data
 	s.enrichPropertyWithImages(property)
 
-	// Increment view count
+	// Increment view count and update database
 	property.IncrementViews()
 	s.repo.Update(property)
+
+	// Cache the property for future requests
+	s.cache.SetProperty(property)
 
 	return property, nil
 }
@@ -185,6 +223,11 @@ func (s *PropertyService) UpdateProperty(id, title, description, province, city,
 		return nil, fmt.Errorf("error updating property: %w", err)
 	}
 
+	// Invalidate caches since property was modified
+	s.cache.InvalidateProperty(id)
+	s.cache.InvalidateSearchResults()
+	s.cache.InvalidateStatistics()
+
 	return property, nil
 }
 
@@ -204,6 +247,11 @@ func (s *PropertyService) DeleteProperty(id string) error {
 	if err := s.repo.Delete(id); err != nil {
 		return fmt.Errorf("error deleting property: %w", err)
 	}
+
+	// Invalidate caches since property was deleted
+	s.cache.InvalidateProperty(id)
+	s.cache.InvalidateSearchResults()
+	s.cache.InvalidateStatistics()
 
 	return nil
 }
@@ -253,6 +301,13 @@ func (s *PropertyService) FilterByPriceRange(minPrice, maxPrice float64) ([]doma
 
 // GetStatistics returns basic property statistics
 func (s *PropertyService) GetStatistics() (map[string]interface{}, error) {
+	// Try to get from cache first
+	cacheKey := "general"
+	if cachedStats, found := s.cache.GetStatistics(cacheKey); found {
+		return cachedStats, nil
+	}
+
+	// Cache miss - calculate statistics
 	properties, err := s.repo.GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving properties: %w", err)
@@ -286,6 +341,9 @@ func (s *PropertyService) GetStatistics() (map[string]interface{}, error) {
 	} else {
 		stats["average_price"] = float64(0)
 	}
+
+	// Cache the statistics for future requests
+	s.cache.SetStatistics(cacheKey, stats)
 
 	return stats, nil
 }
@@ -398,10 +456,19 @@ func (s *PropertyService) SearchPropertiesRanked(query string, limit int) ([]rep
 		limit = 50
 	}
 
+	// Try to get from cache first
+	if cachedResults, found := s.cache.GetSearchResults(query, limit); found {
+		return cachedResults, nil
+	}
+
+	// Cache miss - perform search
 	results, err := s.repo.SearchPropertiesRanked(query, limit)
 	if err != nil {
 		return nil, fmt.Errorf("error performing ranked search: %w", err)
 	}
+
+	// Cache the results for future requests
+	s.cache.SetSearchResults(query, limit, results)
 
 	return results, nil
 }
@@ -786,4 +853,14 @@ func (s *PropertyService) SearchPropertiesSimple(query string, pagination *domai
 	}
 	
 	return properties, nil
+}
+
+// GetCacheStats returns cache performance statistics
+func (s *PropertyService) GetCacheStats() cache.PropertyCacheStats {
+	return s.cache.GetStats()
+}
+
+// ClearCache clears all cached data
+func (s *PropertyService) ClearCache() {
+	s.cache.Clear()
 }
