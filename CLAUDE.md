@@ -8,10 +8,12 @@ Sistema de gestión de propiedades inmobiliarias en Go 1.24 para el mercado ecua
 
 **Tecnologías:**
 - Backend: Go 1.24 con net/http nativo
-- Base de datos: PostgreSQL 
-- ORM: A definir (GORM vs database/sql)
+- Base de datos: PostgreSQL con FTS
+- Frontend: Next.js 15 con shadcn/ui + Tailwind
+- Autenticación: JWT con roles y permisos
 - Desarrollo local con Docker
-- Testing: testify
+- Testing: testify + E2E con Puppeteer
+- MCP Stack: 7 herramientas para desarrollo acelerado
 
 **Objetivos:**
 - CRUD completo de propiedades inmobiliarias
@@ -40,6 +42,17 @@ go fmt ./...
 
 # Verificar código
 go vet ./...
+```
+
+### Herramientas MCP (Desarrollo Acelerado)
+```bash
+# Context7 - Inteligencia del proyecto
+# Sequential - Metodología paso a paso
+# Magic - Generación rápida de UI
+# Puppeteer - Testing E2E
+# Filesystem - Operaciones de archivos
+# PostgreSQL - Optimización de DB
+# OpenAPI - Generación de tipos TypeScript
 ```
 
 ### Base de Datos (GoLand + Docker Compose)
@@ -268,11 +281,12 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 
 ## Estado Actual del Proyecto
 
-**Versión:** v1.9.0-sistema-completo  
-**Fecha:** 2025-01-11  
+**Versión:** v2.0.0-jwt-authentication  
+**Fecha:** 2025-07-14  
 **Cobertura Tests:** 90%+ promedio (179 tests)  
 **Funcionalidades:** 56+ endpoints funcionales con autenticación JWT completa  
-**FASE 1 COMPLETADA:** ✅ Sistema de autenticación y autorización JWT funcional
+**FASE 1 COMPLETADA:** ✅ Sistema de autenticación y autorización JWT funcional  
+**MCP STACK:** ✅ 7 herramientas configuradas para desarrollo acelerado
 
 ### Funcionalidades Completadas ✅
 - **Arquitectura limpia:** Domain/Service/Repository/Handlers optimizada
@@ -307,15 +321,16 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 - ✅ **Resource-specific access:** Control por ownership de recursos
 - ✅ **Handlers de autenticación:** Login/logout seguro con validación
 - ✅ **Configuración production-ready:** Variables de entorno, secrets seguros
+- ✅ **MCP Stack:** 7 herramientas configuradas para desarrollo acelerado
 
 ### PRÓXIMA FASE 2 - Dashboard Frontend 📋
-- **React/Next.js 14:** Dashboard administrativo con UI/UX de élite
+- **React/Next.js 15:** Dashboard administrativo con UI/UX de élite
 - **shadcn/ui + Tailwind:** Componentes modernos y responsive
-- **TanStack Query:** State management y data fetching optimizado
+- **TanStack Query + Zustand:** State management y data fetching optimizado
 - **Framer Motion:** Animaciones y micro-interacciones fluidas
-- **Documentación:** API documentation y guías de uso
-- **Deployment:** Preparación para producción
-- **Dashboard:** Interfaz de administración
+- **MCP Stack:** 7 herramientas para desarrollo acelerado
+- **Type Safety:** Integración automática Go→TypeScript
+- **Dashboard:** Interfaz de administración con testing E2E
 
 ## Notas para el Desarrollo
 

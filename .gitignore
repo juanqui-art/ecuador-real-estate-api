@@ -1,83 +1,145 @@
-# Binarios Go
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Go specific
+# Binaries for programs and plugins
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-/bin/
-
-# Test binaries
+bin/
+server
 *.test
 
-# Output del compilador Go
-*.o
-*.a
+# Test binary, built with `go test -c`
+*.test
 
-# Coverage reports
+# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-*.html
 
-# Archivos de entorno
-.env
-.env.local
-.env.*.local
-
-# Logs
-*.log
-logs/
-
-# Base de datos local
-*.db
-*.sqlite
-
-# GoLand / IntelliJ - most rules are in .idea/.gitignore
-# Keep only essential team files: runConfigurations/, inspectionProfiles/, vcs.xml, .gitignore
-.idea/*
-!.idea/.gitignore
-!.idea/runConfigurations/
-!.idea/inspectionProfiles/
-!.idea/vcs.xml
-
-# Docker volumes y cache
-docker/data/
-docker/logs/
-
-# Archivos temporales
-*.tmp
-*.temp
-.DS_Store
-Thumbs.db
-
-# Backup files
-*.bak
-*.backup
-*.sql.bak
-
-# Go workspace
+# Go workspace file
 go.work
-go.work.sum
 
-# Dependency directories
-vendor/
+# Benchmark results
+benchmark_results/
+*.pprof
 
-# Output directory
-dist/
-build/
+# Image uploads
+uploads/images/originals/*
+uploads/images/temp/*
+uploads/images/thumbnails/*
+uploads/images/variants/*
 
-# Archivos específicos del proyecto a excluir (temporales/personales)
-docker-compose.yml
-ejercicios/
-docs/
-docker/
-migraciones/
-usage_examples.md
+# Keep directories but not files
+!uploads/images/originals/.gitkeep
+!uploads/images/temp/.gitkeep
+!uploads/images/thumbnails/.gitkeep
+!uploads/images/variants/.gitkeep
+
+# Cache files
 test_cache.go
 
-# Claude Code personal files - MANTENER COMANDOS OFICIALES
-.claude/settings.local.json
+# TypeScript build info
+*.tsbuildinfo
 
-# GoLand personal configurations (more specific exclusions)
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/usage.statistics.xml
-.idea/shelf/
+# Vercel
+.vercel
+
+# Turbo
+.turbo
+
+# Claude Code personal files
+.claude/settings.local.json
