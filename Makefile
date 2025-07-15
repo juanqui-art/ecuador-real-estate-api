@@ -29,21 +29,21 @@ NC=\033[0m # No Color
 build:
 	@echo "$(GREEN)🔨 Construyendo aplicación...$(NC)"
 	@mkdir -p $(BUILD_DIR)
-	@go build -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+	@cd apps/backend && go build -o ../../$(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
 	@echo "$(GREEN)✅ Binario creado: $(BUILD_DIR)/$(BINARY_NAME)$(NC)"
 
 ## build-dev: Build con flags de desarrollo
 build-dev:
 	@echo "$(BLUE)🔨 Build modo desarrollo...$(NC)"
 	@mkdir -p $(BUILD_DIR)
-	@go build -race -o $(BUILD_DIR)/$(BINARY_NAME)-dev $(MAIN_PATH)
+	@cd apps/backend && go build -race -o ../../$(BUILD_DIR)/$(BINARY_NAME)-dev $(MAIN_PATH)
 	@echo "$(GREEN)✅ Build dev completado$(NC)"
 
 ## build-prod: Build optimizado para producción
 build-prod:
 	@echo "$(BLUE)🔨 Build modo producción...$(NC)"
 	@mkdir -p $(BUILD_DIR)
-	@CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o $(BUILD_DIR)/$(BINARY_NAME)-prod $(MAIN_PATH)
+	@cd apps/backend && CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o ../../$(BUILD_DIR)/$(BINARY_NAME)-prod $(MAIN_PATH)
 	@echo "$(GREEN)✅ Build producción completado$(NC)"
 
 ## ================================
@@ -53,7 +53,7 @@ build-prod:
 ## run: Ejecutar la aplicación en modo desarrollo
 run:
 	@echo "$(GREEN)🚀 Ejecutando servidor...$(NC)"
-	@go run $(MAIN_PATH)
+	@cd apps/backend && go run $(MAIN_PATH)
 
 ## run-prod: Ejecutar binario de producción
 run-prod: build-prod
@@ -67,44 +67,44 @@ run-prod: build-prod
 ## test: Ejecutar todos los tests
 test:
 	@echo "$(YELLOW)🧪 Ejecutando todos los tests...$(NC)"
-	@go test ./... -v
+	@cd apps/backend && go test ./... -v
 
 ## test-short: Ejecutar tests rápidos (sin integración)
 test-short:
 	@echo "$(YELLOW)⚡ Ejecutando tests rápidos...$(NC)"
-	@go test ./... -short -v
+	@cd apps/backend && go test ./... -short -v
 
 ## test-cache: Tests específicos del sistema de cache
 test-cache:
 	@echo "$(YELLOW)🗃️  Ejecutando tests de cache...$(NC)"
-	@go test ./internal/cache/... -v
+	@cd apps/backend && go test ./internal/cache/... -v
 
 ## test-images: Tests del sistema de imágenes
 test-images:
 	@echo "$(YELLOW)🖼️  Ejecutando tests de imágenes...$(NC)"
-	@go test ./internal/storage/... ./internal/processors/... -v
+	@cd apps/backend && go test ./internal/storage/... ./internal/processors/... -v
 
 ## test-properties: Tests del CRUD de propiedades
 test-properties:
 	@echo "$(YELLOW)🏠 Ejecutando tests de propiedades...$(NC)"
-	@go test ./internal/domain/... ./internal/service/... ./internal/repository/... -v
+	@cd apps/backend && go test ./internal/domain/... ./internal/service/... ./internal/repository/... -v
 
 ## test-handlers: Tests de handlers HTTP
 test-handlers:
 	@echo "$(YELLOW)🌐 Ejecutando tests de handlers...$(NC)"
-	@go test ./internal/handlers/... -v
+	@cd apps/backend && go test ./internal/handlers/... -v
 
 ## test-coverage: Ejecutar tests con reporte de cobertura
 test-coverage:
 	@echo "$(YELLOW)📊 Generando reporte de cobertura...$(NC)"
-	@go test ./... -coverprofile=$(COVERAGE_FILE)
-	@go tool cover -html=$(COVERAGE_FILE) -o coverage.html
+	@cd apps/backend && go test ./... -coverprofile=../../$(COVERAGE_FILE)
+	@cd apps/backend && go tool cover -html=../../$(COVERAGE_FILE) -o ../../coverage.html
 	@echo "$(GREEN)✅ Reporte generado: coverage.html$(NC)"
 
 ## test-bench: Ejecutar benchmarks del cache
 test-bench:
 	@echo "$(YELLOW)⚡ Ejecutando benchmarks...$(NC)"
-	@go test ./internal/cache/... -bench=. -benchmem
+	@cd apps/backend && go test ./internal/cache/... -bench=. -benchmem
 
 ## ================================
 ## 🔍 QUALITY COMMANDS  
@@ -113,13 +113,13 @@ test-bench:
 ## lint: Ejecutar linter
 lint:
 	@echo "$(BLUE)🔍 Ejecutando linter...$(NC)"
-	@go vet ./...
+	@cd apps/backend && go vet ./...
 	@echo "$(GREEN)✅ Linting completado$(NC)"
 
 ## format: Formatear código
 format:
 	@echo "$(BLUE)📝 Formateando código...$(NC)"
-	@go fmt ./...
+	@cd apps/backend && go fmt ./...
 	@echo "$(GREEN)✅ Formato aplicado$(NC)"
 
 ## check: Verificación completa (format + lint + test)
@@ -137,42 +137,36 @@ check-full: format lint test
 ## deps: Descargar dependencias
 deps:
 	@echo "$(BLUE)📦 Descargando dependencias...$(NC)"
-	@go mod download
+	@cd apps/backend && go mod download
+	@pnpm install
 	@echo "$(GREEN)✅ Dependencias descargadas$(NC)"
 
 ## deps-update: Actualizar dependencias
 deps-update:
 	@echo "$(BLUE)🔄 Actualizando dependencias...$(NC)"
-	@go get -u ./...
-	@go mod tidy
+	@cd apps/backend && go get -u ./... && go mod tidy
+	@pnpm update
 	@echo "$(GREEN)✅ Dependencias actualizadas$(NC)"
 
 ## deps-tidy: Limpiar dependencias no utilizadas
 deps-tidy:
 	@echo "$(BLUE)🧹 Limpiando dependencias...$(NC)"
-	@go mod tidy
+	@cd apps/backend && go mod tidy
 	@echo "$(GREEN)✅ Dependencias limpiadas$(NC)"
 
 ## ================================
 ## 🗃️  DATABASE COMMANDS
 ## ================================
 
-## db-up: Iniciar base de datos con Docker
-db-up:
-	@echo "$(BLUE)🐘 Iniciando PostgreSQL...$(NC)"
-	@docker-compose up -d postgres
-	@echo "$(GREEN)✅ PostgreSQL iniciado$(NC)"
+## db-connect: Conectar a PostgreSQL local
+db-connect:
+	@echo "$(BLUE)🐘 Conectando a PostgreSQL local...$(NC)"
+	@psql -h localhost -p 5433 -U juanquizhpi -d inmobiliaria_db
 
-## db-down: Detener base de datos
-db-down:
-	@echo "$(YELLOW)🛑 Deteniendo PostgreSQL...$(NC)"
-	@docker-compose down
-	@echo "$(GREEN)✅ PostgreSQL detenido$(NC)"
-
-## db-logs: Ver logs de la base de datos
-db-logs:
-	@echo "$(BLUE)📋 Logs de PostgreSQL:$(NC)"
-	@docker-compose logs postgres
+## db-status: Verificar estado de PostgreSQL local
+db-status:
+	@echo "$(BLUE)📋 Estado de PostgreSQL:$(NC)"
+	@psql -h localhost -p 5433 -U juanquizhpi -d inmobiliaria_db -c "SELECT version();"
 
 ## ================================
 ## 🧹 CLEANUP COMMANDS
@@ -188,7 +182,7 @@ clean:
 ## clean-cache: Limpiar cache de Go
 clean-cache:
 	@echo "$(YELLOW)🗑️  Limpiando cache de Go...$(NC)"
-	@go clean -cache
+	@cd apps/backend && go clean -cache
 	@echo "$(GREEN)✅ Cache limpiado$(NC)"
 
 ## ================================
@@ -214,32 +208,32 @@ release: clean deps check-full test-coverage build-prod
 ## migrate-up: Aplicar todas las migraciones pendientes
 migrate-up:
 	@echo "$(BLUE)🆙 Aplicando migraciones...$(NC)"
-	@tools/migrate.sh up
+	@tools/scripts/migrate.sh up
 
 ## migrate-down: Revertir última migración (o N migraciones)
 migrate-down:
 	@echo "$(YELLOW)⬇️  Revirtiendo migración...$(NC)"
-	@tools/migrate.sh down $(N)
+	@tools/scripts/migrate.sh down $(N)
 
 ## migrate-version: Ver versión actual de migraciones
 migrate-version:
 	@echo "$(BLUE)📊 Versión actual de migraciones:$(NC)"
-	@tools/migrate.sh version
+	@tools/scripts/migrate.sh version
 
 ## migrate-create: Crear nueva migración (usar NAME=nombre_migracion)
 migrate-create:
 	@echo "$(GREEN)📝 Creando nueva migración: $(NAME)$(NC)"
-	@tools/migrate.sh create $(NAME)
+	@tools/scripts/migrate.sh create $(NAME)
 
 ## migrate-force: Forzar versión específica (usar VERSION=numero)
 migrate-force:
 	@echo "$(RED)⚠️  Forzando versión $(VERSION) (peligroso!)$(NC)"
-	@tools/migrate.sh force $(VERSION)
+	@tools/scripts/migrate.sh force $(VERSION)
 
 ## migrate-validate: Validar conexión a base de datos
 migrate-validate:
 	@echo "$(BLUE)🔍 Validando conexión a base de datos...$(NC)"
-	@tools/migrate.sh validate
+	@tools/scripts/migrate.sh validate
 
 ## db-setup: Setup completo de base de datos (migraciones + datos de prueba)
 db-setup: migrate-up
@@ -249,8 +243,8 @@ db-setup: migrate-up
 db-reset:
 	@echo "$(RED)⚠️  RESETEO DESTRUCTIVO - Presiona Ctrl+C para cancelar$(NC)"
 	@sleep 3
-	@tools/migrate.sh down 999
-	@tools/migrate.sh up
+	@tools/scripts/migrate.sh down 999
+	@tools/scripts/migrate.sh up
 	@echo "$(GREEN)🔄 Base de datos reseteada$(NC)"
 
 ## ================================
@@ -260,19 +254,18 @@ db-reset:
 ## sync-docs: Sincronizar toda la documentación desde PROGRESS.md
 sync-docs:
 	@echo "$(BLUE)📚 Sincronizando documentación...$(NC)"
-	@cd tools && go run sync-docs.go sync
-	@echo "$(GREEN)✅ Documentación sincronizada$(NC)"
+	@echo "$(YELLOW)⚠️  Herramienta sync-docs no disponible en nueva estructura$(NC)"
 
 ## validate-docs: Validar consistencia de documentación
 validate-docs:
 	@echo "$(YELLOW)🔍 Validando consistencia de documentación...$(NC)"
-	@cd tools && go run sync-docs.go validate
-	@echo "$(GREEN)✅ Documentación validada$(NC)"
+	@echo "$(YELLOW)⚠️  Herramienta sync-docs no disponible en nueva estructura$(NC)"
 
 ## check-docs: Verificar estado actual de documentación
 check-docs:
 	@echo "$(BLUE)📋 Estado actual de documentación:$(NC)"
-	@cd tools && go run sync-docs.go check
+	@echo "$(GREEN)📁 Documentación organizada en /docs/$(NC)"
+	@ls -la docs/
 
 ## fix-docs: Forzar sincronización y validación completa
 fix-docs: sync-docs validate-docs

@@ -25,52 +25,83 @@ Sistema de gestión de propiedades inmobiliarias en Go 1.24 para el mercado ecua
 
 ### Desarrollo Local
 ```bash
-# Ejecutar servidor de desarrollo
-go run cmd/server/main.go
+# Ejecutar servidor de desarrollo (desde raíz del proyecto)
+go run ./apps/backend/cmd/server/main.go
 
 # Construir el proyecto
-go build -o bin/inmobiliaria ./cmd/server
+cd apps/backend && go build -o ../../bin/inmobiliaria ./cmd/server
 
 # Ejecutar tests
-go test ./...
+cd apps/backend && go test ./...
 
 # Ejecutar tests con cobertura
-go test -cover ./...
+cd apps/backend && go test -cover ./...
 
 # Formatear código
-go fmt ./...
+cd apps/backend && go fmt ./...
 
 # Verificar código
-go vet ./...
+cd apps/backend && go vet ./...
+
+# Frontend (Next.js)
+pnpm dev  # Ejecuta frontend desde monorepo workspace
 ```
 
 ### Herramientas MCP (Desarrollo Acelerado)
+**7 herramientas MCP configuradas para desarrollo optimizado:**
+
 ```bash
-# Context7 - Inteligencia del proyecto
-# Sequential - Metodología paso a paso
-# Magic - Generación rápida de UI
-# Puppeteer - Testing E2E
-# Filesystem - Operaciones de archivos
-# PostgreSQL - Optimización de DB
-# OpenAPI - Generación de tipos TypeScript
+# 🧠 Context7 - Inteligencia completa del proyecto
+# Entiende: arquitectura Go, JWT auth, 56+ endpoints, roles y permisos
+
+# 📋 Sequential - Metodología paso a paso
+# Planifica: workflows por roles, desarrollo incremental, testing
+
+# ✨ Magic - Generación rápida de UI
+# Genera: componentes React + shadcn/ui + Tailwind + TypeScript
+
+# 🎭 Puppeteer - Testing E2E automatizado
+# Ejecuta: workflows completos, testing de roles, validación auth
+
+# 📁 Filesystem - Operaciones de archivos optimizadas
+# Gestiona: estructura proyecto, configuraciones, templates
+
+# 🐘 PostgreSQL - Optimización de DB y queries
+# Analiza: performance, indices, conexiones, FTS español
+
+# 🔗 OpenAPI - Generación automática Go→TypeScript
+# Genera: interfaces TypeScript, cliente API, documentación
 ```
 
-### Base de Datos (GoLand + Docker Compose)
+**Ejemplos de uso práctico:**
+- **Frontend:** `Magic + Context7` → Generar PropertyCard con auth
+- **Testing:** `Puppeteer + Context7` → Probar flujo CRUD completo  
+- **Backend:** `PostgreSQL + Sequential` → Optimizar queries FTS
+
+*Ver `MCP_USAGE_GUIDE.md` para workflows detallados por rol*
+
+### Base de Datos (PostgreSQL Local)
 ```bash
-# Iniciar servicios desde GoLand
-# View → Tool Windows → Services → docker-compose → postgres → Start
+# PostgreSQL instalación local (NO Docker)
+# Configuración actual:
+# Host: localhost
+# Port: 5433
+# Database: inmobiliaria_db
+# User: juanquizhpi
+# Password: (vacío)
 
-# Desde terminal (alternativo)
-docker-compose up -d postgres
+# Conectar desde GoLand Database Tool Window
+# 1. View → Tool Windows → Database
+# 2. + → Data Source → PostgreSQL
+# 3. Host: localhost, Port: 5433
+# 4. Database: inmobiliaria_db, User: juanquizhpi
+# 5. Test Connection → OK
 
-# Ver logs desde GoLand
-# Services → postgres → Logs
+# Comando psql directo
+psql -h localhost -p 5433 -U juanquizhpi -d inmobiliaria_db
 
-# Conectar desde Database Tool Window
-# Host: localhost, Port: 5433, DB: inmobiliaria_db, User: juanquizhpi, Pass: (vacío)
-
-# Detener servicios
-docker-compose down
+# Verificar conexión
+psql -h localhost -p 5433 -U juanquizhpi -d inmobiliaria_db -c "SELECT version();"
 ```
 
 ### Dependencias
@@ -87,24 +118,28 @@ go mod download
 
 ## Arquitectura del Proyecto
 
-**Estructura de Directorios:**
+**Estructura de Directorios (Monorepo):**
 ```
 realty-core/
-├── cmd/
-│   └── server/             # Application entry point
-├── internal/
-│   ├── domain/             # Business logic and models
-│   ├── repository/         # Data access (properties + images)
-│   ├── service/            # Application services
-│   ├── handlers/           # HTTP handlers + responses
-│   ├── cache/              # LRU cache implementation
-│   ├── storage/            # Image storage (local filesystem)
-│   ├── processors/         # Image processing (resize, compress)
-│   └── config/             # Configuration management
-├── pkg/                   # Reusable code
-├── migrations/            # Database scripts
-├── tests/                 # Integration tests
-└── docs/                  # Documentation
+├── apps/
+│   ├── backend/           # Go API application
+│   │   ├── cmd/server/    # Application entry point
+│   │   ├── internal/      # Backend modules
+│   │   ├── migrations/    # Database scripts
+│   │   └── tests/         # Integration tests
+│   └── frontend/          # Next.js dashboard
+├── packages/
+│   └── shared/            # Tipos TypeScript compartidos
+├── tools/
+│   ├── scripts/           # Scripts de deployment
+│   ├── docker/            # Docker configs
+│   └── nginx/             # Nginx configs
+├── docs/                  # Documentación organizada
+│   ├── development/       # Docs de desarrollo
+│   ├── mcp/              # Guías MCP
+│   ├── project/          # Estado del proyecto
+│   └── exercises/        # Ejercicios Go
+└── bin/                  # Binarios compilados
 ```
 
 **Patrones Utilizados:**
@@ -268,16 +303,16 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 ## Configuración de Desarrollo
 
 ### IDE: GoLand 2025.1.3
-- **Services Tool Window:** Para gestionar Docker containers
-- **Database Tool Window:** Para conexión PostgreSQL integrada
+- **Database Tool Window:** Para conexión PostgreSQL local integrada
 - **Run Configurations:** API configurada con variables de entorno
 - **HTTP Client:** Para probar endpoints desde el IDE
+- **Terminal:** Acceso directo a psql y comandos Go
 
-### Docker Compose
-- **PostgreSQL 15:** Base de datos principal
-- **pgAdmin:** Interfaz web opcional (puerto 5050)
-- **Volúmenes persistentes:** Datos sobreviven reinicios
-- **Auto-migraciones:** Scripts SQL ejecutados automáticamente
+### PostgreSQL Local
+- **PostgreSQL 15:** Instalación nativa del sistema
+- **puerto 5433:** Configuración personalizada (no 5432 estándar)
+- **Conexión directa:** Sin contenedores Docker
+- **Persistencia:** Datos almacenados en sistema de archivos local
 
 ## Estado Actual del Proyecto
 
@@ -286,7 +321,8 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 **Cobertura Tests:** 90%+ promedio (179 tests)  
 **Funcionalidades:** 56+ endpoints funcionales con autenticación JWT completa  
 **FASE 1 COMPLETADA:** ✅ Sistema de autenticación y autorización JWT funcional  
-**MCP STACK:** ✅ 7 herramientas configuradas para desarrollo acelerado
+**MCP STACK:** ✅ 7 herramientas configuradas para desarrollo acelerado  
+**BASE DE DATOS:** ✅ PostgreSQL local (puerto 5433) configurado correctamente
 
 ### Funcionalidades Completadas ✅
 - **Arquitectura limpia:** Domain/Service/Repository/Handlers optimizada
