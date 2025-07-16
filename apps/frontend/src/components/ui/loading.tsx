@@ -262,3 +262,14 @@ export function SearchLoading() {
     </div>
   );
 }
+
+/**
+ * Simple loading component for ProtectedRoute
+ */
+export function Loading({ text = 'Cargando...' }: { text?: string }) {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <LoadingSpinner size="lg" text={text} />
+    </div>
+  );
+}

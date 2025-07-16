@@ -11,8 +11,8 @@ import {
   Settings, 
   Menu,
   Bell,
-  Search,
-  LogOut
+  LogOut,
+  Search
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ import { Input } from '@/components/ui/input';
 
 import { useAuthStore } from '@/store/auth';
 import { useLogout } from '@/hooks/useAuth';
+import { PublicSearch } from '@/components/search/public-search';
 import type { UserRole } from '@shared/types/auth';
 
 interface NavigationItem {
@@ -44,9 +45,10 @@ interface NavigationItem {
 const navigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['admin', 'agency', 'agent', 'owner', 'buyer'] },
   { name: 'Propiedades', href: '/properties', icon: Building, roles: ['admin', 'agency', 'agent', 'owner', 'buyer'] },
+  { name: 'Búsqueda', href: '/search', icon: Search, roles: ['admin', 'agency', 'agent', 'owner', 'buyer'] },
   { name: 'Usuarios', href: '/users', icon: Users, roles: ['admin', 'agency'] },
   { name: 'Agencias', href: '/agencies', icon: Building2, roles: ['admin'] },
-  { name: 'Estadísticas', href: '/statistics', icon: BarChart3, roles: ['admin', 'agency'] },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3, roles: ['admin', 'agency'] },
   { name: 'Configuración', href: '/settings', icon: Settings, roles: ['admin', 'agency', 'agent', 'owner', 'buyer'] },
 ];
 
@@ -170,11 +172,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </Sheet>
 
               {/* Search */}
-              <div className="relative ml-4 flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
+              <div className="ml-4 flex-1 max-w-md">
+                <PublicSearch 
                   placeholder="Buscar propiedades..."
-                  className="pl-10"
+                  onResultSelect={(result) => {
+                    // Navigate to property detail page
+                    window.location.href = `/properties/${result.id}`;
+                  }}
                 />
               </div>
             </div>
