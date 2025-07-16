@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -29,9 +28,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 
-import { useAuthStore, type UserRole } from '@/store/auth';
+import { useAuthStore } from '@/store/auth';
+import { useLogout } from '@/hooks/useAuth';
+import type { UserRole } from '@shared/types/auth';
 
 interface NavigationItem {
   name: string;
@@ -56,7 +56,8 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
+  const logoutMutation = useLogout();
 
   const filteredNavigation = navigation.filter(item => 
     user?.role && item.roles.includes(user.role)
@@ -207,9 +208,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     Configuración
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                  <DropdownMenuItem 
+                    onClick={() => logoutMutation.mutate()} 
+                    className="text-red-600"
+                    disabled={logoutMutation.isPending}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar Sesión
+                    {logoutMutation.isPending ? 'Cerrando...' : 'Cerrar Sesión'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

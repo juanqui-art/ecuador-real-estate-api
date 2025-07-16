@@ -1,5 +1,6 @@
 // Export all types and schemas
 export * from './types/property';
+export * from './types/auth';
 
 // Re-export commonly used types
 export type {
@@ -18,6 +19,16 @@ export type {
   LoginCredentials,
   ApiError,
 } from './types/property';
+
+// Re-export auth types
+export type {
+  LoginResponse,
+  RefreshTokenResponse,
+  TokenValidationResponse,
+  LoginRequest,
+  RefreshTokenRequest,
+  ChangePasswordRequest,
+} from './types/auth';
 
 // Re-export schemas
 export {
