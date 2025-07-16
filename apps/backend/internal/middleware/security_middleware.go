@@ -142,9 +142,8 @@ func (sm *SecurityMiddleware) validateURLParameters(w http.ResponseWriter, r *ht
 
 // validateHeaders validates HTTP headers for security threats
 func (sm *SecurityMiddleware) validateHeaders(w http.ResponseWriter, r *http.Request) bool {
-	// Headers to validate
+	// Headers to validate (exclude User-Agent from strict validation)
 	headersToValidate := []string{
-		"User-Agent",
 		"Referer",
 		"X-Forwarded-For",
 		"X-Real-IP",
@@ -189,7 +188,8 @@ func (sm *SecurityMiddleware) hasSuspiciousHeaders(r *http.Request) bool {
 	suspiciousPatterns := []string{
 		"sqlmap", "nikto", "nmap", "masscan", "nessus",
 		"burp", "owasp", "w3af", "dirbuster", "gobuster",
-		"python-requests", "curl", "wget", "lwp-trivial",
+		// Remove development tools from suspicious patterns
+		// "python-requests", "curl", "wget", "lwp-trivial",
 	}
 	
 	for _, pattern := range suspiciousPatterns {

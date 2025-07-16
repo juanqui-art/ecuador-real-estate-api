@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -84,19 +85,30 @@ func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 		SELECT id, first_name, last_name, email, phone, national_id, date_of_birth, 
 			   user_type, active, min_budget, max_budget, preferred_provinces, 
 			   preferred_property_types, avatar_url, bio, real_estate_company_id,
-			   receive_notifications, receive_newsletter, agency_id, created_at, updated_at
+			   receive_notifications, receive_newsletter, agency_id, password_hash, created_at, updated_at
 		FROM users 
 		WHERE email = $1`
 
 	user := &domain.User{}
+	var provincesJSON, propertyTypesJSON []byte
 	err := r.db.QueryRow(query, email).Scan(
 		&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Phone,
 		&user.Cedula, &user.DateOfBirth, &user.Role, &user.Active,
-		&user.MinBudget, &user.MaxBudget, pq.Array(&user.PreferredProvinces),
-		pq.Array(&user.PreferredPropertyTypes), &user.AvatarURL, &user.Bio,
+		&user.MinBudget, &user.MaxBudget, &provincesJSON,
+		&propertyTypesJSON, &user.AvatarURL, &user.Bio,
 		&user.RealEstateCompanyID, &user.ReceiveNotifications, &user.ReceiveNewsletter,
-		&user.AgencyID, &user.CreatedAt, &user.UpdatedAt,
+		&user.AgencyID, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt,
 	)
+	
+	if err == nil {
+		// Parse JSONB arrays after successful scan
+		if len(provincesJSON) > 0 {
+			json.Unmarshal(provincesJSON, &user.PreferredProvinces)
+		}
+		if len(propertyTypesJSON) > 0 {
+			json.Unmarshal(propertyTypesJSON, &user.PreferredPropertyTypes)
+		}
+	}
 
 	if err != nil {
 		if err == sql.ErrNoRows {

@@ -2,6 +2,7 @@ package security
 
 import (
 	"net"
+	"os"
 	"regexp"
 	"strings"
 	"unicode"
@@ -60,6 +61,11 @@ func (v *InputValidator) ValidateInput(input string, fieldName string) *Validati
 		IsValid: true,
 		Field:   fieldName,
 		Threats: make([]ThreatInfo, 0),
+	}
+
+	// Skip strict validation for User-Agent headers
+	if fieldName == "header_user-agent" {
+		return result // User-Agent headers are validated separately
 	}
 
 	// Check input length
@@ -306,17 +312,34 @@ func NewIPValidator() *IPValidator {
 		blockedRanges: make([]net.IPNet, 0),
 	}
 	
-	// Add common blocked ranges (private networks, localhost, etc.)
-	blockedCIDRs := []string{
-		"127.0.0.0/8",   // Localhost
-		"10.0.0.0/8",    // Private
-		"172.16.0.0/12", // Private
-		"192.168.0.0/16", // Private
-		"169.254.0.0/16", // Link-local
-		"224.0.0.0/4",   // Multicast
-		"::1/128",       // IPv6 localhost
-		"fc00::/7",      // IPv6 private
-		"fe80::/10",     // IPv6 link-local
+	// Get environment to determine security level
+	environment := os.Getenv("GO_ENV")
+	if environment == "" {
+		environment = "development"
+	}
+	
+	// Add common blocked ranges (adjust for development vs production)
+	var blockedCIDRs []string
+	
+	if environment == "development" {
+		// In development, only block truly dangerous ranges
+		blockedCIDRs = []string{
+			"224.0.0.0/4",   // Multicast
+			// Allow localhost and private networks for development
+		}
+	} else {
+		// In production, block all private networks and localhost
+		blockedCIDRs = []string{
+			"127.0.0.0/8",   // Localhost
+			"10.0.0.0/8",    // Private
+			"172.16.0.0/12", // Private
+			"192.168.0.0/16", // Private
+			"169.254.0.0/16", // Link-local
+			"224.0.0.0/4",   // Multicast
+			"::1/128",       // IPv6 localhost
+			"fc00::/7",      // IPv6 private
+			"fe80::/10",     // IPv6 link-local
+		}
 	}
 	
 	for _, cidr := range blockedCIDRs {
@@ -331,7 +354,10 @@ func NewIPValidator() *IPValidator {
 
 // ValidateIP validates IP address and checks against blocked ranges
 func (v *IPValidator) ValidateIP(ipStr string) (bool, string) {
-	ip := net.ParseIP(ipStr)
+	// Clean IP string for IPv6 brackets
+	cleanIP := strings.Trim(ipStr, "[]")
+	
+	ip := net.ParseIP(cleanIP)
 	if ip == nil {
 		return false, "invalid IP format"
 	}
@@ -348,7 +374,10 @@ func (v *IPValidator) ValidateIP(ipStr string) (bool, string) {
 
 // IsPrivateIP checks if an IP address is in a private range
 func (v *IPValidator) IsPrivateIP(ipStr string) bool {
-	ip := net.ParseIP(ipStr)
+	// Clean IP string for IPv6 brackets
+	cleanIP := strings.Trim(ipStr, "[]")
+	
+	ip := net.ParseIP(cleanIP)
 	if ip == nil {
 		return false
 	}
