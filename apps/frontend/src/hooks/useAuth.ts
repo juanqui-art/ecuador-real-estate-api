@@ -1,72 +1,49 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { apiClient, type ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth';
+import type { 
+  LoginRequest,
+  LoginResponse, 
+  RefreshTokenResponse,
+  TokenValidationResponse,
+  ChangePasswordRequest,
+  User
+} from '@shared/types/auth';
 
-// Types
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
-  user: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    role: 'admin' | 'agency' | 'agent' | 'owner' | 'buyer';
-    agency_id?: string;
-    status: 'active' | 'inactive' | 'suspended' | 'pending';
-  };
-}
-
-interface ChangePasswordRequest {
-  current_password: string;
-  new_password: string;
-}
-
-interface TokenValidationResponse {
-  valid: boolean;
-  user?: AuthResponse['user'];
-  expires_at: string;
-}
-
-// API functions
+// API functions using new fetch-based client
 const authApi = {
-  // Login
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await api.post('/auth/login', credentials);
+  // Login - matches Go backend response format
+  login: async (credentials: LoginRequest): Promise<LoginResponse> => {
+    const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
     return response.data;
   },
 
   // Refresh token
-  refreshToken: async (refreshToken: string): Promise<{ access_token: string; refresh_token?: string }> => {
-    const response = await api.post('/auth/refresh', { refresh_token: refreshToken });
+  refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {
+    const response = await apiClient.post<RefreshTokenResponse>('/auth/refresh', { refresh_token: refreshToken });
     return response.data;
   },
 
   // Logout
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
+    await apiClient.post<void>('/auth/logout');
   },
 
   // Validate token
   validateToken: async (): Promise<TokenValidationResponse> => {
-    const response = await api.get('/auth/validate');
+    const response = await apiClient.get<TokenValidationResponse>('/auth/validate');
     return response.data;
   },
 
   // Change password
   changePassword: async (data: ChangePasswordRequest): Promise<void> => {
-    await api.post('/auth/change-password', data);
+    await apiClient.post<void>('/auth/change-password', data);
   },
 
   // Get current user profile
-  getCurrentUser: async (): Promise<AuthResponse['user']> => {
-    const response = await api.get('/auth/me');
+  getCurrentUser: async (): Promise<User> => {
+    const response = await apiClient.get<User>('/auth/me');
     return response.data;
   },
 };
@@ -79,20 +56,22 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
-      // Update auth store
+      console.log('🔑 Login successful, updating auth state');
+      
+      // Update auth store with correct structure from Go backend
       login(
         { 
-          access_token: data.access_token, 
-          refresh_token: data.refresh_token 
+          access_token: data.tokens.access_token, 
+          refresh_token: data.tokens.refresh_token 
         },
         data.user
       );
       
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Simple redirect - let the page logic handle the actual navigation
+      console.log('🔑 Auth state updated, navigation will be handled by useEffect');
     },
     onError: (error) => {
-      console.error('Login failed:', error);
+      console.error('❌ Login failed:', error);
     },
   });
 };
@@ -103,20 +82,43 @@ export const useLogout = () => {
   const { logout } = useAuthStore();
   
   return useMutation({
-    mutationFn: authApi.logout,
+    mutationFn: async () => {
+      console.log('🔓 Starting logout process...');
+      
+      // Try to logout from backend first, but don't let it block the UI
+      try {
+        await authApi.logout();
+        console.log('✅ Backend logout successful');
+      } catch (error: any) {
+        // If logout fails with 401, it means the token is already invalid
+        // This is actually a successful logout from the user's perspective
+        if (error?.status === 401) {
+          console.log('✅ Backend logout: Token already invalid (expected)');
+        } else {
+          console.log('⚠️ Backend logout failed, but proceeding with client cleanup:', error.message);
+        }
+        // Don't throw - we want to continue with cleanup regardless
+      }
+    },
     onSuccess: () => {
-      // Clear auth store
+      console.log('🧹 Performing client-side cleanup...');
+      
+      // Clear auth store and tokens
       logout();
       
       // Clear all queries
       queryClient.clear();
       
+      console.log('✅ Logout complete - redirecting to login');
+      
       // Redirect to login
       router.push('/login');
     },
-    onError: (error) => {
-      console.error('Logout failed:', error);
-      // Still logout on error
+    onError: (error: ApiError) => {
+      // This should rarely happen now since we handle errors in mutationFn
+      console.log('⚠️ Logout mutation failed, but still cleaning up:', error.message);
+      
+      // Always logout on error - if backend fails, we still want to clear client state
       logout();
       queryClient.clear();
       router.push('/login');
