@@ -32,25 +32,8 @@ import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/auth';
 import { useLogout } from '@/hooks/useAuth';
 import { PublicSearch } from '@/components/search/public-search';
+import { RoleBasedNavigation, RoleBasedQuickActions, RoleBasedNavStats } from '@/components/navigation/role-based-navigation';
 import type { UserRole } from '@shared/types/auth';
-
-interface NavigationItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  roles: UserRole[];
-  badge?: string;
-}
-
-const navigation: NavigationItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['admin', 'agency', 'agent', 'owner', 'buyer'] },
-  { name: 'Propiedades', href: '/properties', icon: Building, roles: ['admin', 'agency', 'agent', 'owner', 'buyer'] },
-  { name: 'Búsqueda', href: '/search', icon: Search, roles: ['admin', 'agency', 'agent', 'owner', 'buyer'] },
-  { name: 'Usuarios', href: '/users', icon: Users, roles: ['admin', 'agency'] },
-  { name: 'Agencias', href: '/agencies', icon: Building2, roles: ['admin'] },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3, roles: ['admin', 'agency'] },
-  { name: 'Configuración', href: '/settings', icon: Settings, roles: ['admin', 'agency', 'agent', 'owner', 'buyer'] },
-];
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -60,10 +43,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuthStore();
   const logoutMutation = useLogout();
-
-  const filteredNavigation = navigation.filter(item => 
-    user?.role && item.roles.includes(user.role)
-  );
 
   const getRoleColor = (role: UserRole) => {
     switch (role) {
@@ -96,25 +75,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-2">
-        {filteredNavigation.map((item) => (
-          <motion.a
-            key={item.name}
-            href={item.href}
-            className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <item.icon className="mr-3 h-5 w-5" />
-            {item.name}
-            {item.badge && (
-              <Badge variant="secondary" className="ml-auto">
-                {item.badge}
-              </Badge>
-            )}
-          </motion.a>
-        ))}
-      </nav>
+      <div className="flex-1 px-4 py-4 space-y-4">
+        <RoleBasedNavigation />
+        
+        {/* Quick Actions */}
+        <div className="pt-4 border-t">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Acciones Rápidas
+          </h3>
+          <RoleBasedQuickActions />
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="px-4 py-2">
+        <RoleBasedNavStats />
+      </div>
 
       {/* User Info */}
       <div className="px-4 py-4 border-t">

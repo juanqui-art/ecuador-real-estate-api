@@ -20,6 +20,7 @@ import { PropertyForm } from '@/components/forms/property-form';
 import { PropertyList } from '@/components/properties/property-list';
 import { PropertyFilters } from '@/components/properties/property-filters';
 import { PropertyStats } from '@/components/properties/property-stats';
+import { CanCreateProperties, CanViewAnalytics, RoleGuard } from '@/components/auth/role-guard';
 
 export default function PropertiesPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -57,27 +58,31 @@ export default function PropertiesPage() {
               <p className="text-gray-600">Gestiona tu portafolio inmobiliario</p>
             </div>
             
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nueva Propiedad
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Crear Nueva Propiedad</DialogTitle>
-                  <DialogDescription>
-                    Completa la información de la propiedad para agregarla a tu portafolio.
-                  </DialogDescription>
-                </DialogHeader>
-                <PropertyForm onSuccess={handlePropertyCreated} />
-              </DialogContent>
-            </Dialog>
+            <CanCreateProperties>
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nueva Propiedad
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Crear Nueva Propiedad</DialogTitle>
+                    <DialogDescription>
+                      Completa la información de la propiedad para agregarla a tu portafolio.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <PropertyForm onSuccess={handlePropertyCreated} />
+                </DialogContent>
+              </Dialog>
+            </CanCreateProperties>
           </div>
 
           {/* Stats Cards */}
-          <PropertyStats />
+          <CanViewAnalytics>
+            <PropertyStats />
+          </CanViewAnalytics>
 
           {/* Search and Filters */}
           <Card>
