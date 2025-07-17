@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { 
   MapPin, 
@@ -12,12 +12,21 @@ import {
   Trash2, 
   Eye,
   Star,
-  Calendar
+  Calendar,
+  ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from '@/components/ui/dialog';
 import { apiClient } from '@/lib/api-client';
 import { formatPrice, formatArea, formatDate } from '@/lib/utils';
 
@@ -51,6 +60,7 @@ interface Property {
   updated_at: string;
   is_featured?: boolean;
   images?: string[];
+  main_image?: string;
 }
 
 interface PropertyListProps {
@@ -71,6 +81,11 @@ interface PropertyListProps {
 export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProps) {
   const [page, setPage] = useState(1);
   const [limit] = useState(12);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  const queryClient = useQueryClient();
 
   const { data: properties, isLoading, error } = useQuery({
     queryKey: ['properties', searchTerm, filters, page, limit],
@@ -93,6 +108,41 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
       return response.data;
     },
   });
+
+  // Delete property mutation
+  const deletePropertyMutation = useMutation({
+    mutationFn: async (propertyId: string) => {
+      const response = await apiClient.delete(`/properties/${propertyId}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      setIsDeleteDialogOpen(false);
+      setSelectedProperty(null);
+    },
+    onError: (error: any) => {
+      console.error('Error deleting property:', error);
+      // You could show a toast notification here
+    },
+  });
+
+  // Handle delete property
+  const handleDeleteProperty = (property: Property) => {
+    setSelectedProperty(property);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedProperty) {
+      deletePropertyMutation.mutate(selectedProperty.id);
+    }
+  };
+
+  // Handle edit property
+  const handleEditProperty = (property: Property) => {
+    setSelectedProperty(property);
+    setIsEditDialogOpen(true);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -136,19 +186,58 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
   };
 
   const PropertyCard = ({ property }: { property: Property }) => (
-    <Card className="group hover:shadow-lg transition-shadow">
+    <Card className="group hover:shadow-lg transition-shadow overflow-hidden">
+      {/* Property Image */}
+      <div className="relative h-48 bg-gray-100 overflow-hidden">
+        {property.main_image ? (
+          <img 
+            src={property.main_image} 
+            alt={property.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+            <div className="text-center">
+              <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+              <p className="text-sm text-gray-500">Sin imagen</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Status Badge */}
+        <div className="absolute top-3 left-3">
+          <Badge className={getStatusColor(property.status)}>
+            {getStatusLabel(property.status)}
+          </Badge>
+        </div>
+        
+        {/* Featured Badge */}
+        {property.is_featured && (
+          <div className="absolute top-3 right-3">
+            <Badge variant="secondary">
+              <Star className="h-3 w-3 mr-1" />
+              Destacada
+            </Badge>
+          </div>
+        )}
+        
+        {/* Price Overlay */}
+        <div className="absolute bottom-3 left-3">
+          <div className="bg-black bg-opacity-75 text-white px-3 py-1 rounded-md">
+            <p className="text-lg font-bold">{formatPrice(property.price)}</p>
+          </div>
+        </div>
+      </div>
+
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <Badge className={getStatusColor(property.status)}>
-                {getStatusLabel(property.status)}
-              </Badge>
               <Badge variant="outline">{getTypeLabel(property.type)}</Badge>
-              {property.is_featured && (
-                <Badge variant="secondary">
-                  <Star className="h-3 w-3 mr-1" />
-                  Destacada
+              {property.images && property.images.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  <ImageIcon className="h-3 w-3 mr-1" />
+                  {property.images.length} foto{property.images.length > 1 ? 's' : ''}
                 </Badge>
               )}
             </div>
@@ -161,7 +250,6 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
             </p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">{formatPrice(property.price)}</p>
             <p className="text-sm text-gray-500">
               {formatArea(property.area_m2)}
             </p>
@@ -219,11 +307,20 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
               <Eye className="h-3 w-3 mr-1" />
               Ver
             </Button>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => handleEditProperty(property)}
+            >
               <Edit className="h-3 w-3 mr-1" />
               Editar
             </Button>
-            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-red-600 hover:text-red-700"
+              onClick={() => handleDeleteProperty(property)}
+            >
               <Trash2 className="h-3 w-3" />
             </Button>
           </div>
@@ -236,6 +333,23 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
     <Card className="group hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-center gap-6">
+          {/* Property Image */}
+          <div className="flex-shrink-0">
+            <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
+              {property.main_image ? (
+                <img 
+                  src={property.main_image} 
+                  alt={property.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ImageIcon className="h-8 w-8 text-gray-400" />
+                </div>
+              )}
+            </div>
+          </div>
+          
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <Badge className={getStatusColor(property.status)}>
@@ -293,11 +407,20 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
                 <Eye className="h-3 w-3 mr-1" />
                 Ver
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleEditProperty(property)}
+              >
                 <Edit className="h-3 w-3 mr-1" />
                 Editar
               </Button>
-              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-red-600 hover:text-red-700"
+                onClick={() => handleDeleteProperty(property)}
+              >
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
@@ -337,10 +460,22 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <p className="text-red-600 mb-4">Error al cargar las propiedades</p>
-          <Button onClick={() => window.location.reload()}>
-            Reintentar
-          </Button>
+          <div className="space-y-4">
+            <div className="text-red-600">
+              <h3 className="font-medium text-lg mb-2">Error al cargar las propiedades</h3>
+              <p className="text-sm text-gray-600">
+                {error instanceof Error ? error.message : 'Ha ocurrido un error inesperado'}
+              </p>
+            </div>
+            <div className="space-x-3">
+              <Button onClick={() => window.location.reload()}>
+                Reintentar
+              </Button>
+              <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['properties'] })}>
+                Refrescar
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -350,10 +485,30 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <p className="text-gray-500 mb-4">No se encontraron propiedades que coincidan con tu búsqueda</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Limpiar filtros
-          </Button>
+          <div className="space-y-4">
+            <div className="text-gray-400">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <Eye className="w-8 h-8" />
+              </div>
+            </div>
+            <div>
+              <h3 className="font-medium text-lg mb-2">No se encontraron propiedades</h3>
+              <p className="text-sm text-gray-600">
+                {searchTerm || Object.values(filters).some(f => f) 
+                  ? 'Intenta ajustar los filtros de búsqueda' 
+                  : 'No hay propiedades disponibles en este momento'
+                }
+              </p>
+            </div>
+            <div className="space-x-3">
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Limpiar filtros
+              </Button>
+              <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['properties'] })}>
+                Refrescar
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -395,6 +550,89 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar Propiedad</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que quieres eliminar la propiedad "{selectedProperty?.title}"? 
+              Esta acción no se puede deshacer y también eliminará todas las imágenes asociadas.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {deletePropertyMutation.error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3">
+              <p className="text-sm text-red-800">
+                <strong>Error:</strong> {deletePropertyMutation.error instanceof Error 
+                  ? deletePropertyMutation.error.message 
+                  : 'No se pudo eliminar la propiedad'}
+              </p>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={deletePropertyMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              disabled={deletePropertyMutation.isPending}
+            >
+              {deletePropertyMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Property Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Propiedad</DialogTitle>
+            <DialogDescription>
+              Editar "{selectedProperty?.title}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              La funcionalidad de edición completa estará disponible próximamente. 
+              Por ahora, puedes eliminar la propiedad y crear una nueva.
+            </p>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">Información actual:</h4>
+              <div className="text-sm text-blue-800 space-y-1">
+                <p><strong>Precio:</strong> {selectedProperty && formatPrice(selectedProperty.price)}</p>
+                <p><strong>Ubicación:</strong> {selectedProperty?.city}, {selectedProperty?.province}</p>
+                <p><strong>Tipo:</strong> {selectedProperty?.type}</p>
+                <p><strong>Estado:</strong> {selectedProperty?.status}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cerrar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                setIsEditDialogOpen(false);
+                if (selectedProperty) {
+                  handleDeleteProperty(selectedProperty);
+                }
+              }}
+            >
+              Eliminar en su lugar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
