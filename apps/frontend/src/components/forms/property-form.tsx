@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import React from 'react';
 import { useForm } from '@tanstack/react-form';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -153,32 +153,8 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
   ];
 
   const form = useForm({
-    defaultValues: {
-      title: initialData?.title || '',
-      description: initialData?.description || '',
-      price: initialData?.price || 0,
-      type: initialData?.type || 'house',
-      status: initialData?.status || 'available',
-      province: initialData?.province || '',
-      city: initialData?.city || '',
-      address: initialData?.address || '',
-      bedrooms: initialData?.bedrooms || 1,
-      bathrooms: initialData?.bathrooms || 1,
-      area_m2: initialData?.area_m2 || 0,
-      parking_spaces: initialData?.parking_spaces || 0,
-      year_built: initialData?.year_built || undefined,
-      has_garden: initialData?.has_garden || false,
-      has_pool: initialData?.has_pool || false,
-      has_elevator: initialData?.has_elevator || false,
-      has_balcony: initialData?.has_balcony || false,
-      has_terrace: initialData?.has_terrace || false,
-      has_garage: initialData?.has_garage || false,
-      is_furnished: initialData?.is_furnished || false,
-      allows_pets: initialData?.allows_pets || false,
-      contact_phone: initialData?.contact_phone || '',
-      contact_email: initialData?.contact_email || '',
-      notes: initialData?.notes || '',
-    },
+    defaultValues: initialData || {},
+    validatorAdapter: propertySchema,
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
       try {
@@ -187,7 +163,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
         setIsSubmitting(false);
       }
     },
-    validatorAdapter: zodValidator,
   });
 
   const validateCurrentStep = () => {
@@ -272,7 +247,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <form.Field
                   name="title"
-                  validators={{ onChange: propertySchema.shape.title }}
                   children={(field) => (
                     <div className="col-span-full">
                       <Label htmlFor="title">Título de la propiedad *</Label>
@@ -291,7 +265,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="type"
-                  validators={{ onChange: propertySchema.shape.type }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="type">Tipo de propiedad *</Label>
@@ -316,7 +289,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="status"
-                  validators={{ onChange: propertySchema.shape.status }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="status">Estado *</Label>
@@ -341,7 +313,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="price"
-                  validators={{ onChange: propertySchema.shape.price }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="price">Precio (USD) *</Label>
@@ -367,7 +338,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
               <form.Field
                 name="description"
-                validators={{ onChange: propertySchema.shape.description }}
                 children={(field) => (
                   <div className="mt-4">
                     <Label htmlFor="description">Descripción *</Label>
@@ -398,7 +368,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <form.Field
                   name="province"
-                  validators={{ onChange: propertySchema.shape.province }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="province">Provincia *</Label>
@@ -423,7 +392,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="city"
-                  validators={{ onChange: propertySchema.shape.city }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="city">Ciudad *</Label>
@@ -442,7 +410,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="address"
-                  validators={{ onChange: propertySchema.shape.address }}
                   children={(field) => (
                     <div className="col-span-full">
                       <Label htmlFor="address">Dirección completa *</Label>
@@ -470,7 +437,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <form.Field
                   name="bedrooms"
-                  validators={{ onChange: propertySchema.shape.bedrooms }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="bedrooms">Dormitorios *</Label>
@@ -491,7 +457,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="bathrooms"
-                  validators={{ onChange: propertySchema.shape.bathrooms }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="bathrooms">Baños *</Label>
@@ -513,7 +478,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="area_m2"
-                  validators={{ onChange: propertySchema.shape.area_m2 }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="area_m2">Área (m²) *</Label>
@@ -534,7 +498,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="parking_spaces"
-                  validators={{ onChange: propertySchema.shape.parking_spaces }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="parking_spaces">Parqueaderos</Label>
@@ -555,7 +518,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="year_built"
-                  validators={{ onChange: propertySchema.shape.year_built }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="year_built">Año de construcción</Label>
@@ -692,7 +654,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <form.Field
                   name="contact_phone"
-                  validators={{ onChange: propertySchema.shape.contact_phone }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="contact_phone">Teléfono de contacto *</Label>
@@ -711,7 +672,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="contact_email"
-                  validators={{ onChange: propertySchema.shape.contact_email }}
                   children={(field) => (
                     <div>
                       <Label htmlFor="contact_email">Email de contacto *</Label>
@@ -731,7 +691,6 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
 
                 <form.Field
                   name="notes"
-                  validators={{ onChange: propertySchema.shape.notes }}
                   children={(field) => (
                     <div className="col-span-full">
                       <Label htmlFor="notes">Notas adicionales</Label>
@@ -814,7 +773,7 @@ export function PropertyForm({ onSuccess, onCancel, initialData, propertyId }: P
           
           <div className="mt-4">
             <div className="flex items-center space-x-2">
-              <step.icon className="w-5 h-5 text-gray-600" />
+              {React.createElement(steps[currentStep].icon, { className: "w-5 h-5 text-gray-600" })}
               <div>
                 <h3 className="font-medium">{steps[currentStep].title}</h3>
                 <p className="text-sm text-gray-600">{steps[currentStep].description}</p>

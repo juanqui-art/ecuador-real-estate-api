@@ -1,7 +1,7 @@
 // Tipos de autenticación sincronizados con el backend Go
 // Este archivo debe mantenerse en sync con internal/domain/user.go
 
-export type UserRole = 'admin' | 'agency' | 'agent' | 'owner' | 'buyer';
+export type UserRole = 'admin' | 'agency' | 'agent' | 'seller' | 'buyer';
 export type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending';
 
 export interface User {
@@ -59,7 +59,7 @@ export interface ChangePasswordRequest {
 }
 
 // Utilidades para roles
-export const ROLE_HIERARCHY: UserRole[] = ['buyer', 'owner', 'agent', 'agency', 'admin'];
+export const ROLE_HIERARCHY: UserRole[] = ['buyer', 'seller', 'agent', 'agency', 'admin'];
 
 export const ROLE_PERMISSIONS = {
   admin: {
@@ -83,7 +83,7 @@ export const ROLE_PERMISSIONS = {
     canViewAnalytics: false,
     canViewAllProperties: false,
   },
-  owner: {
+  seller: {
     canManageUsers: false,
     canManageAgencies: false,
     canManageProperties: true, // Only their own properties
@@ -106,6 +106,14 @@ export const hasMinimumRole = (userRole: UserRole, minimumRole: UserRole): boole
   return userRoleIndex >= minRoleIndex;
 };
 
+export const canAccessRole = (userRole: UserRole, requiredRole: UserRole): boolean => {
+  return hasMinimumRole(userRole, requiredRole);
+};
+
+export const canAccessRoles = (userRole: UserRole, requiredRoles: UserRole[]): boolean => {
+  return requiredRoles.some(role => canAccessRole(userRole, role));
+};
+
 export const hasPermission = (userRole: UserRole, permission: keyof typeof ROLE_PERMISSIONS.admin): boolean => {
   return ROLE_PERMISSIONS[userRole]?.[permission] || false;
 };
@@ -115,7 +123,7 @@ export const getRoleDisplayName = (role: UserRole): string => {
     admin: 'Administrador',
     agency: 'Agencia',
     agent: 'Agente',
-    owner: 'Propietario',
+    seller: 'Propietario',
     buyer: 'Comprador',
   };
   return displayNames[role];

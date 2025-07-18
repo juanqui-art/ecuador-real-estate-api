@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loading } from '@/components/ui/loading';
 import type { UserRole } from '@shared/types/auth';
+import { canAccessRoles } from '@shared/types/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: UserRole[];
+  requiredRole?: UserRole | UserRole[];
   fallback?: React.ReactNode;
 }
 
@@ -33,9 +34,12 @@ export function ProtectedRoute({
         return;
       }
 
-      if (requiredRole && !requiredRole.includes(user?.role || 'buyer')) {
-        router.push('/unauthorized');
-        return;
+      if (requiredRole) {
+        const rolesArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        if (!canAccessRoles(user?.role || 'buyer', rolesArray)) {
+          router.push('/unauthorized');
+          return;
+        }
       }
     }, 100);
 
@@ -53,8 +57,11 @@ export function ProtectedRoute({
   }
 
   // Verificar rol si es requerido
-  if (requiredRole && !requiredRole.includes(user?.role || 'buyer')) {
-    return fallback;
+  if (requiredRole) {
+    const rolesArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!canAccessRoles(user?.role || 'buyer', rolesArray)) {
+      return fallback;
+    }
   }
 
   return <>{children}</>;

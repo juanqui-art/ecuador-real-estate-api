@@ -26,9 +26,9 @@ import {
   BarChart3
 } from 'lucide-react';
 
-export function OwnerDashboard() {
+export function SellerDashboard() {
   // Mock data - in real app, this would come from API
-  const ownerStats = {
+  const sellerStats = {
     totalProperties: 5,
     activeListings: 3,
     totalViews: 1245,
@@ -205,9 +205,9 @@ export function OwnerDashboard() {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ownerStats.activeListings}</div>
+            <div className="text-2xl font-bold">{sellerStats.activeListings}</div>
             <p className="text-xs text-muted-foreground">
-              {ownerStats.totalProperties} total
+              {sellerStats.totalProperties} total
             </p>
           </CardContent>
         </Card>
@@ -218,7 +218,7 @@ export function OwnerDashboard() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ownerStats.totalViews.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{sellerStats.totalViews.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               +15% vs mes anterior
             </p>
@@ -231,7 +231,7 @@ export function OwnerDashboard() {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ownerStats.totalInquiries}</div>
+            <div className="text-2xl font-bold">{sellerStats.totalInquiries}</div>
             <p className="text-xs text-muted-foreground">
               +8% vs mes anterior
             </p>
@@ -244,9 +244,9 @@ export function OwnerDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${ownerStats.averagePrice.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${sellerStats.averagePrice.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              {ownerStats.avgDaysOnMarket} días promedio
+              {sellerStats.avgDaysOnMarket} días promedio
             </p>
           </CardContent>
         </Card>

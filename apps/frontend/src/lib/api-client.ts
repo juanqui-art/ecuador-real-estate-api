@@ -213,7 +213,7 @@ class ApiClient {
     }
     
     const headers = await this.prepareHeaders(authHeaders);
-    const url = `${this.baseURL}/api${endpoint}`;
+    const url = `${this.baseURL}${endpoint}`;
 
     const requestOptions: RequestInit = {
       method,

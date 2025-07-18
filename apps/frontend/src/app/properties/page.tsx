@@ -48,7 +48,7 @@ export default function PropertiesPage() {
   };
 
   return (
-    <ProtectedRoute requiredRole={['admin', 'agency', 'agent', 'owner']}>
+    <ProtectedRoute requiredRole={['admin', 'agency', 'agent', 'seller']}>
       <DashboardLayout>
         <div className="space-y-6">
           {/* Header */}

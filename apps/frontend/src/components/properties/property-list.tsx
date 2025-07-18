@@ -28,40 +28,12 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { apiClient } from '@/lib/api-client';
+import { EditPropertyDialog } from '@/components/dialogs/edit-property-dialog';
+import { 
+  Property, 
+  ApiResponse
+} from '@shared/types/property';
 import { formatPrice, formatArea, formatDate } from '@/lib/utils';
-
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  type: string;
-  status: string;
-  province: string;
-  city: string;
-  address: string;
-  bedrooms: number;
-  bathrooms: number;
-  area_m2: number;
-  parking_spaces: number;
-  year_built?: number;
-  has_garden: boolean;
-  has_pool: boolean;
-  has_elevator: boolean;
-  has_balcony: boolean;
-  has_terrace: boolean;
-  has_garage: boolean;
-  is_furnished: boolean;
-  allows_pets: boolean;
-  contact_phone: string;
-  contact_email: string;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-  is_featured?: boolean;
-  images?: string[];
-  main_image?: string;
-}
 
 interface PropertyListProps {
   searchTerm: string;
@@ -87,33 +59,55 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
   
   const queryClient = useQueryClient();
 
-  const { data: properties, isLoading, error } = useQuery({
+  const { data: propertiesResponse, isLoading, error } = useQuery({
     queryKey: ['properties', searchTerm, filters, page, limit],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      
-      if (searchTerm) params.append('search', searchTerm);
-      if (filters.type) params.append('type', filters.type);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.province) params.append('province', filters.province);
-      if (filters.city) params.append('city', filters.city);
-      if (filters.bedrooms) params.append('bedrooms', filters.bedrooms);
-      if (filters.bathrooms) params.append('bathrooms', filters.bathrooms);
-      if (filters.minPrice) params.append('min_price', filters.minPrice);
-      if (filters.maxPrice) params.append('max_price', filters.maxPrice);
-      params.append('page', page.toString());
-      params.append('limit', limit.toString());
-
-      const response = await apiClient.get(`/properties?${params.toString()}`);
-      return response.data;
+      try {
+        const params = new URLSearchParams();
+        
+        if (searchTerm) params.append('q', searchTerm);
+        if (filters.type) params.append('type', filters.type);
+        if (filters.status) params.append('status', filters.status);
+        if (filters.province) params.append('province', filters.province);
+        if (filters.city) params.append('city', filters.city);
+        if (filters.bedrooms) params.append('bedrooms', filters.bedrooms);
+        if (filters.bathrooms) params.append('bathrooms', filters.bathrooms);
+        if (filters.minPrice) params.append('min_price', filters.minPrice);
+        if (filters.maxPrice) params.append('max_price', filters.maxPrice);
+        
+        // Use filter endpoint for search, regular endpoint for list
+        const endpoint = searchTerm || Object.values(filters).some(Boolean) 
+          ? `/api/properties/filter?${params.toString()}`
+          : '/api/properties';
+        
+        const response = await apiClient.get<ApiResponse<Property[]>>(endpoint);
+        return response.data;
+      } catch (error: any) {
+        console.error('Error fetching properties:', error);
+        throw error;
+      }
+    },
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors
+      if (error?.status === 401 || error?.status === 403) {
+        return false;
+      }
+      return failureCount < 3;
     },
   });
+  
+  const properties = propertiesResponse?.data || [];
 
   // Delete property mutation
   const deletePropertyMutation = useMutation({
     mutationFn: async (propertyId: string) => {
-      const response = await apiClient.delete(`/properties/${propertyId}`);
-      return response.data;
+      try {
+        const response = await apiClient.delete(`/api/properties/${propertyId}`);
+        return response.data;
+      } catch (error: any) {
+        console.error('Error deleting property:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -122,7 +116,12 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
     },
     onError: (error: any) => {
       console.error('Error deleting property:', error);
-      // You could show a toast notification here
+      // Here you could show a toast notification
+      if (error?.status === 401) {
+        console.error('Unauthorized - redirecting to login');
+      } else if (error?.status === 403) {
+        console.error('Forbidden - insufficient permissions');
+      }
     },
   });
 
@@ -212,7 +211,7 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
         </div>
         
         {/* Featured Badge */}
-        {property.is_featured && (
+        {property.featured && (
           <div className="absolute top-3 right-3">
             <Badge variant="secondary">
               <Star className="h-3 w-3 mr-1" />
@@ -283,17 +282,29 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
 
         {/* Features */}
         <div className="flex flex-wrap gap-1 mb-4">
-          {property.has_pool && (
+          {property.pool && (
             <Badge variant="outline" className="text-xs">Piscina</Badge>
           )}
-          {property.has_garden && (
+          {property.garden && (
             <Badge variant="outline" className="text-xs">Jardín</Badge>
           )}
-          {property.has_elevator && (
+          {property.elevator && (
             <Badge variant="outline" className="text-xs">Ascensor</Badge>
           )}
-          {property.is_furnished && (
+          {property.furnished && (
             <Badge variant="outline" className="text-xs">Amueblado</Badge>
+          )}
+          {property.garage && (
+            <Badge variant="outline" className="text-xs">Garage</Badge>
+          )}
+          {property.security && (
+            <Badge variant="outline" className="text-xs">Seguridad</Badge>
+          )}
+          {property.terrace && (
+            <Badge variant="outline" className="text-xs">Terraza</Badge>
+          )}
+          {property.balcony && (
+            <Badge variant="outline" className="text-xs">Balcón</Badge>
           )}
         </div>
 
@@ -356,7 +367,7 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
                 {getStatusLabel(property.status)}
               </Badge>
               <Badge variant="outline">{getTypeLabel(property.type)}</Badge>
-              {property.is_featured && (
+              {property.featured && (
                 <Badge variant="secondary">
                   <Star className="h-3 w-3 mr-1" />
                   Destacada
@@ -457,23 +468,39 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
   }
 
   if (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Ha ocurrido un error inesperado';
+    const isAuthError = error?.status === 401 || error?.status === 403;
+    
     return (
       <Card>
         <CardContent className="p-8 text-center">
           <div className="space-y-4">
             <div className="text-red-600">
-              <h3 className="font-medium text-lg mb-2">Error al cargar las propiedades</h3>
+              <h3 className="font-medium text-lg mb-2">
+                {isAuthError ? 'Error de autenticación' : 'Error al cargar las propiedades'}
+              </h3>
               <p className="text-sm text-gray-600">
-                {error instanceof Error ? error.message : 'Ha ocurrido un error inesperado'}
+                {isAuthError ? 
+                  'Necesitas iniciar sesión para ver las propiedades' : 
+                  errorMessage
+                }
               </p>
             </div>
             <div className="space-x-3">
-              <Button onClick={() => window.location.reload()}>
-                Reintentar
-              </Button>
-              <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['properties'] })}>
-                Refrescar
-              </Button>
+              {isAuthError ? (
+                <Button onClick={() => window.location.href = '/login'}>
+                  Iniciar sesión
+                </Button>
+              ) : (
+                <>
+                  <Button onClick={() => window.location.reload()}>
+                    Reintentar
+                  </Button>
+                  <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['properties'] })}>
+                    Refrescar
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
@@ -592,47 +619,15 @@ export function PropertyList({ searchTerm, filters, viewMode }: PropertyListProp
       </Dialog>
 
       {/* Edit Property Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Propiedad</DialogTitle>
-            <DialogDescription>
-              Editar "{selectedProperty?.title}"
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              La funcionalidad de edición completa estará disponible próximamente. 
-              Por ahora, puedes eliminar la propiedad y crear una nueva.
-            </p>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Información actual:</h4>
-              <div className="text-sm text-blue-800 space-y-1">
-                <p><strong>Precio:</strong> {selectedProperty && formatPrice(selectedProperty.price)}</p>
-                <p><strong>Ubicación:</strong> {selectedProperty?.city}, {selectedProperty?.province}</p>
-                <p><strong>Tipo:</strong> {selectedProperty?.type}</p>
-                <p><strong>Estado:</strong> {selectedProperty?.status}</p>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cerrar
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={() => {
-                setIsEditDialogOpen(false);
-                if (selectedProperty) {
-                  handleDeleteProperty(selectedProperty);
-                }
-              }}
-            >
-              Eliminar en su lugar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditPropertyDialog
+        property={selectedProperty}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={() => {
+          setSelectedProperty(null);
+          setIsEditDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

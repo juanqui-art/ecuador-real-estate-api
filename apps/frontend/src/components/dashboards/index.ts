@@ -2,7 +2,7 @@
 export { AdminDashboard } from './admin-dashboard';
 export { AgencyDashboard } from './agency-dashboard';
 export { AgentDashboard } from './agent-dashboard';
-export { OwnerDashboard } from './owner-dashboard';
+export { SellerDashboard } from './seller-dashboard';
 export { BuyerDashboard } from './buyer-dashboard';
 
 // Main dashboard system

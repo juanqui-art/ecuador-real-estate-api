@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth';
 import { AdminDashboard } from './admin-dashboard';
 import { AgencyDashboard } from './agency-dashboard';
 import { AgentDashboard } from './agent-dashboard';
-import { OwnerDashboard } from './owner-dashboard';
+import { SellerDashboard } from './seller-dashboard';
 import { BuyerDashboard } from './buyer-dashboard';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, Shield } from 'lucide-react';
@@ -71,8 +71,8 @@ export function RoleBasedDashboard() {
     case 'agent':
       return <AgentDashboard />;
     
-    case 'owner':
-      return <OwnerDashboard />;
+    case 'seller':
+      return <SellerDashboard />;
     
     case 'buyer':
       return <BuyerDashboard />;
@@ -116,7 +116,7 @@ export function useRolePermissions() {
   const isAdmin = (): boolean => hasRole('admin');
   const isAgency = (): boolean => hasRole('agency');
   const isAgent = (): boolean => hasRole('agent');
-  const isOwner = (): boolean => hasRole('owner');
+  const isSeller = (): boolean => hasRole('seller');
   const isBuyer = (): boolean => hasRole('buyer');
   
   const canManageUsers = (): boolean => {
@@ -124,7 +124,7 @@ export function useRolePermissions() {
   };
   
   const canManageProperties = (): boolean => {
-    return hasAnyRole(['admin', 'agency', 'agent', 'owner']);
+    return hasAnyRole(['admin', 'agency', 'agent', 'seller']);
   };
   
   const canViewAnalytics = (): boolean => {
@@ -142,7 +142,7 @@ export function useRolePermissions() {
     isAdmin,
     isAgency,
     isAgent,
-    isOwner,
+    isSeller,
     isBuyer,
     canManageUsers,
     canManageProperties,

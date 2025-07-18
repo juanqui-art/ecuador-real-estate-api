@@ -199,6 +199,35 @@ type ImageCache struct {
 }
 ```
 
+## Sistema de Roles y Permisos
+
+### Jerarquía de Roles (de menor a mayor):
+1. **Buyer (Comprador)** - Puede ver propiedades, hacer consultas
+2. **Seller (Propietario)** - Puede crear y gestionar sus propiedades
+3. **Agent (Agente)** - Puede gestionar propiedades de su agencia
+4. **Agency (Agencia)** - Puede gestionar agentes y propiedades de la agencia
+5. **Admin (Administrador)** - Acceso total al sistema
+
+### Permisos por Rol:
+- **Admin**: Gestión completa de usuarios, agencias, propiedades, analytics
+- **Agency**: Gestión de usuarios (su agencia), propiedades (su agencia), analytics
+- **Agent**: Gestión de propiedades asignadas
+- **Seller**: Gestión de sus propiedades
+- **Buyer**: Solo lectura de propiedades
+
+### Acceso Jerárquico:
+- Un admin puede hacer todo lo que hacen los roles inferiores
+- Una agency puede hacer todo lo que hacen agent, seller, buyer
+- Un agent puede hacer todo lo que hacen seller, buyer
+- Un seller puede hacer todo lo que hace buyer
+
+### Rutas Protegidas:
+- `/dashboard` - Requiere rol mínimo: buyer (todos los roles pueden acceder)
+- `/properties` - Público para ver, buyer+ para gestionar
+- `/analytics` - Requiere rol mínimo: agency
+- `/users` - Requiere rol mínimo: agency
+- `/agencies` - Requiere rol mínimo: admin
+
 ## API Endpoints
 
 ### CRUD Básico
@@ -320,8 +349,8 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 
 ## Estado Actual del Proyecto
 
-**Versión:** v3.2.0-crud-complete  
-**Fecha:** 2025-07-17  
+**Versión:** v3.3.0-integration-complete  
+**Fecha:** 2025-07-18  
 **Cobertura Tests:** 90%+ promedio (179 tests)  
 **Funcionalidades:** 56+ endpoints funcionales con autenticación JWT completa  
 **FASE 1 COMPLETADA:** ✅ Sistema de autenticación y autorización JWT funcional  
@@ -329,6 +358,7 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 **FASE 3 COMPLETADA:** ✅ Simplificación a client-side approach  
 **FASE 4 COMPLETADA:** ✅ Dashboard features avanzadas implementadas  
 **FASE 5 COMPLETADA:** ✅ CRUD completo propiedades + imagen integration  
+**FASE 6 COMPLETADA:** ✅ Backend-Frontend Integration y CRUD fixes  
 **HOTFIXES RESUELTOS:** ✅ Errores de compilación y naming conflicts corregidos  
 **MCP STACK:** ✅ 7 herramientas configuradas para desarrollo acelerado  
 **BASE DE DATOS:** ✅ PostgreSQL local (puerto 5433) configurado correctamente
@@ -371,6 +401,11 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 - **✅ CRUD Propiedades COMPLETO:** Eliminar y editar propiedades funcional
 - **🔧 Error Handling:** Manejo robusto de errores en todas las operaciones
 - **📱 UX Mejorado:** Loading states, empty states, error states optimizados
+- **🔗 Integración Backend-Frontend:** Tipos TypeScript sincronizados con backend
+- **🛠️ API Client Corregido:** URLs duplicadas eliminadas, interceptors funcionales
+- **⚡ Error Handling Avanzado:** Manejo específico de errores 401/403 con retry logic
+- **🎯 Mapeo de Campos:** Nombres de campos corregidos (featured, pool, garden, etc.)
+- **🔄 Sincronización Completa:** Frontend y backend completamente alineados
 
 ### Sistemas Integrados 🏗️
 1. **🔐 Autenticación (5 endpoints):** JWT, login, logout, refresh, validation
@@ -438,6 +473,17 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 - `/apps/frontend/src/components/properties/property-list.tsx` - CRUD completo con mutaciones
 - **Resultado:** ✅ Sistema de propiedades completamente funcional con integración de imágenes
 
+### FASE 6 - Backend-Frontend Integration y CRUD fixes COMPLETADA 🎉
+- ✅ **🔍 Análisis Profundo Backend:** Revisión completa de 56+ endpoints y arquitectura
+- ✅ **🔗 Sincronización Tipos:** TypeScript types alineados con structures Go del backend
+- ✅ **🛠️ API Client Fixes:** Eliminación de URLs duplicadas y configuración correcta
+- ✅ **📊 Mapeo de Campos:** Corrección de nombres de campos (featured, pool, garden, etc.)
+- ✅ **⚡ Error Handling Avanzado:** Manejo específico de errores 401/403 con retry logic
+- ✅ **🎯 Endpoints Correctos:** Uso de `/api/properties/filter` para búsquedas
+- ✅ **🔄 Integración Completa:** Frontend y backend completamente sincronizados
+- ✅ **🧪 Testing Exitoso:** Build sin errores, servidor funcionando en puerto 8080
+- ✅ **📱 UX Optimizada:** Estados de loading, error handling contextual, loading states
+
 ### PRÓXIMA FASE - Optimización y Finalización 🚀
 - **🧹 Cleanup:** Optimizar código y remover archivos temporales
 - **📱 Mobile:** Optimizaciones adicionales para dispositivos móviles
@@ -478,10 +524,11 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 - **Responsive design** con Tailwind CSS
 
 ### 🔧 Utilidades y Hooks
-- **`/apps/frontend/src/lib/api-client.ts`** - Cliente API con interceptors
+- **`/apps/frontend/src/lib/api-client.ts`** - Cliente API con interceptors (CORREGIDO)
 - **`/apps/frontend/src/store/auth.ts`** - Store de autenticación Zustand
 - **`/apps/frontend/src/hooks/useAuth.ts`** - Hooks de autenticación
 - **`/apps/frontend/src/lib/utils.ts`** - Utilidades generales
+- **`/packages/shared/types/property.ts`** - Tipos TypeScript sincronizados con backend
 
 ### 🔒 Autenticación y Seguridad
 - **Login/Logout** con JWT tokens
