@@ -23,8 +23,8 @@ interface RequestConfig {
 }
 
 class ApiClient {
-  private baseURL: string;
-  private defaultHeaders: Record<string, string>;
+  private readonly baseURL: string;
+  private readonly defaultHeaders: Record<string, string>;
 
   constructor() {
     this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';

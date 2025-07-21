@@ -56,7 +56,7 @@ export function useTemporaryImages({
           formData.append('order', i.toString());
 
           try {
-            const response = await apiClient.upload('/images', formData);
+            const response = await apiClient.upload('/api/images', formData);
             
             if (response.data.success) {
               uploadedImages.push(response.data.data);
@@ -79,7 +79,7 @@ export function useTemporaryImages({
           
           if (mainUploadedImage) {
             try {
-              await apiClient.post(`/properties/${propertyId}/images/main`, {
+              await apiClient.post(`/api/properties/${propertyId}/images/main`, {
                 image_id: mainUploadedImage.id
               });
             } catch (error) {

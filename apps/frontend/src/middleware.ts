@@ -1,46 +1,48 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// ================ AUTHENTICATION DISABLED FOR DEVELOPMENT ================
 // Routes that require authentication
-const protectedRoutes = ['/dashboard'];
+// const protectedRoutes = ['/dashboard'];
 
 // Routes that should redirect to dashboard if authenticated
-const authRoutes = ['/login'];
+// const authRoutes = ['/login'];
 
 // Public routes that don't require authentication
-const publicRoutes = ['/', '/about', '/contact'];
+// const publicRoutes = ['/', '/about', '/contact'];
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  // const { pathname } = request.nextUrl;
   
   // Get token from cookies (set by client-side auth)
-  const accessToken = request.cookies.get('access_token')?.value;
-  const refreshToken = request.cookies.get('refresh_token')?.value;
+  // const accessToken = request.cookies.get('access_token')?.value;
+  // const refreshToken = request.cookies.get('refresh_token')?.value;
   
-  const isAuthenticated = accessToken && refreshToken;
+  // const isAuthenticated = accessToken && refreshToken;
 
   // Check if the current route is protected
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname.startsWith(route)
-  );
+  // const isProtectedRoute = protectedRoutes.some(route => 
+  //   pathname.startsWith(route)
+  // );
 
   // Check if the current route is an auth route
-  const isAuthRoute = authRoutes.some(route => 
-    pathname.startsWith(route)
-  );
+  // const isAuthRoute = authRoutes.some(route => 
+  //   pathname.startsWith(route)
+  // );
 
   // Redirect to login if trying to access protected route without auth
-  if (isProtectedRoute && !isAuthenticated) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
+  // if (isProtectedRoute && !isAuthenticated) {
+  //   const loginUrl = new URL('/login', request.url);
+  //   loginUrl.searchParams.set('redirect', pathname);
+  //   return NextResponse.redirect(loginUrl);
+  // }
 
   // Redirect to dashboard if trying to access auth routes while authenticated
-  if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
+  // if (isAuthRoute && isAuthenticated) {
+  //   return NextResponse.redirect(new URL('/dashboard', request.url));
+  // }
 
+  // NO AUTH MODE: Allow all routes
   return NextResponse.next();
 }
 

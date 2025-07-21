@@ -47,9 +47,6 @@ export function BaseForm<TFormData extends Record<string, any>>({
   const form = useForm({
     defaultValues: defaultValues || {} as Partial<TFormData>,
     validatorAdapter: zodValidator(),
-    validators: {
-      onChange: schema,
-    },
     onSubmit: async ({ value }) => {
       try {
         setSubmitStatus({ type: null, message: '' });
@@ -196,7 +193,9 @@ export function FieldWrapper({
  * Helper function to get field error message
  */
 export function getFieldError(field: FieldApi<any, any, any, any>) {
-  return field.state.meta.errors?.[0];
+  const error = field.state.meta.errors?.[0];
+  if (!error) return undefined;
+  return typeof error === 'string' ? error : error.message || 'Error de validación';
 }
 
 /**

@@ -36,17 +36,19 @@ export const PROPERTY_STATUS = [
   { value: 'available', label: 'Disponible' },
   { value: 'sold', label: 'Vendida' },
   { value: 'rented', label: 'Rentada' },
+  { value: 'reserved', label: 'Reservada' },
 ];
 
 export const PROPERTY_FEATURES = [
-  { key: 'has_garden', label: 'Jardín' },
-  { key: 'has_pool', label: 'Piscina' },
-  { key: 'has_elevator', label: 'Ascensor' },
-  { key: 'has_balcony', label: 'Balcón' },
-  { key: 'has_terrace', label: 'Terraza' },
-  { key: 'has_garage', label: 'Garaje' },
-  { key: 'is_furnished', label: 'Amueblado' },
-  { key: 'allows_pets', label: 'Permite mascotas' },
+  { key: 'garden', label: 'Jardín' },
+  { key: 'pool', label: 'Piscina' },
+  { key: 'elevator', label: 'Ascensor' },
+  { key: 'balcony', label: 'Balcón' },
+  { key: 'terrace', label: 'Terraza' },
+  { key: 'garage', label: 'Garaje' },
+  { key: 'furnished', label: 'Amueblado' },
+  { key: 'air_conditioning', label: 'Aire acondicionado' },
+  { key: 'security', label: 'Seguridad' },
 ];
 
 export const PRICE_RANGES = [

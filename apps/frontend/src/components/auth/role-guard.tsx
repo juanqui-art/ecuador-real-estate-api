@@ -1,14 +1,15 @@
 'use client';
 
-import { useAuthStore } from '@/store/auth';
-import { hasPermission, hasMinimumRole } from '@shared/types/auth';
-import type { UserRole } from '@shared/types/auth';
+// ================ AUTHENTICATION DISABLED FOR DEVELOPMENT ================
+// import { useAuthStore } from '@/store/auth';
+// import { hasPermission, hasMinimumRole } from '@shared/types/auth';
+// import type { UserRole } from '@shared/types/auth';
 
 interface RoleGuardProps {
   children: React.ReactNode;
-  requiredRole?: UserRole;
+  requiredRole?: any; // UserRole;
   requiredPermission?: string;
-  allowedRoles?: UserRole[];
+  allowedRoles?: any[]; // UserRole[];
   fallback?: React.ReactNode;
   showFallback?: boolean;
 }
@@ -21,6 +22,10 @@ export function RoleGuard({
   fallback = null,
   showFallback = false
 }: RoleGuardProps) {
+  // NO AUTH MODE: Always render children
+  return <>{children}</>;
+
+  /* ORIGINAL AUTH CODE - COMMENTED FOR DEVELOPMENT
   const { user } = useAuthStore();
 
   // User not authenticated
@@ -44,100 +49,57 @@ export function RoleGuard({
   }
 
   return <>{children}</>;
+  */
 }
 
-// Helper components for common permission checks
+// Helper components for common permission checks (NO AUTH MODE)
 export function AdminOnly({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['admin']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
 export function AgencyOnly({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['agency']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
 export function AgentOnly({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['agent']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
 export function OwnerOnly({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['owner']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
 export function BuyerOnly({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['buyer']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
-// Management permission guards
+// Management permission guards (NO AUTH MODE)
 export function CanManageUsers({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['admin', 'agency']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
 export function CanManageProperties({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['admin', 'agency', 'agent', 'owner']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
 export function CanViewAnalytics({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['admin', 'agency']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
 export function CanManageAgencies({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['admin']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
-// Property-specific permissions
+// Property-specific permissions (NO AUTH MODE)
 export function CanCreateProperties({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['admin', 'agency', 'agent', 'owner']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
 export function CanDeleteProperties({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['admin', 'agency', 'owner']} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  );
+  return <>{children}</>;
 }
 
-// Advanced role guards with conditions
+// Advanced role guards with conditions (NO AUTH MODE)
 export function ConditionalRoleGuard({
   children,
   condition,
@@ -147,32 +109,16 @@ export function ConditionalRoleGuard({
   condition: (user: any) => boolean;
   fallback?: React.ReactNode;
 }) {
-  const { user } = useAuthStore();
-
-  if (!user || !condition(user)) {
-    return <>{fallback}</>;
-  }
-
   return <>{children}</>;
 }
 
-// Role-based styling helper
+// Role-based styling helper (NO AUTH MODE)
 export function RoleBasedStyles({ 
   children, 
   roleStyles 
 }: { 
   children: React.ReactNode; 
-  roleStyles: Record<UserRole, string> 
+  roleStyles: Record<any, string> 
 }) {
-  const { user } = useAuthStore();
-  
-  if (!user) return <>{children}</>;
-  
-  const className = roleStyles[user.role] || '';
-  
-  return (
-    <div className={className}>
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

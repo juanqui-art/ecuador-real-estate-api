@@ -1,23 +1,28 @@
 'use client';
 
-import { useAuthStore } from '@/store/auth';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Loading } from '@/components/ui/loading';
-import type { UserRole } from '@shared/types/auth';
-import { canAccessRoles } from '@shared/types/auth';
+// ================ AUTHENTICATION DISABLED FOR DEVELOPMENT ================
+// import { useAuthStore } from '@/store/auth';
+// import { useRouter } from 'next/navigation';
+// import { useEffect, useState } from 'react';
+// import { Loading } from '@/components/ui/loading';
+// import type { UserRole } from '@shared/types/auth';
+// import { canAccessRoles } from '@shared/types/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: UserRole | UserRole[];
+  requiredRole?: any; // UserRole | UserRole[];
   fallback?: React.ReactNode;
 }
 
 export function ProtectedRoute({ 
   children, 
   requiredRole, 
-  fallback = <Loading /> 
+  fallback 
 }: ProtectedRouteProps) {
+  // NO AUTH MODE: Always render children directly
+  return <>{children}</>;
+
+  /* ORIGINAL AUTH CODE - COMMENTED FOR DEVELOPMENT
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
@@ -65,4 +70,5 @@ export function ProtectedRoute({
   }
 
   return <>{children}</>;
+  */
 }

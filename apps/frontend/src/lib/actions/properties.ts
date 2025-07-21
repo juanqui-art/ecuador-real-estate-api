@@ -1,171 +1,196 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { propertySchema, propertyFilterSchema, imageUploadSchema } from '@/lib/validations/property';
-import type { PropertyFormData, PropertyFilterData, ImageUploadData } from '@/lib/validations/property';
+import { z } from 'zod';
 
 /**
- * Server action to create a new property
+ * Modern Server Actions for Property CRUD Operations
+ * Following Next.js 15 + React 19 Best Practices (2025)
+ * 
+ * Key Features:
+ * - Progressive Enhancement (works without JS)
+ * - Type-safe with Zod validation
+ * - Proper error handling
+ * - Optimistic UI support via revalidatePath
+ * - Server-side validation
+ * - NO AUTH MODE for development
  */
-export async function createPropertyAction(prevState: any, formData: FormData) {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
 
-    if (!accessToken) {
+// Modern Property Schema with 2025 best practices
+const PropertySchema = z.object({
+  title: z.string().min(10, 'El título debe tener al menos 10 caracteres'),
+  description: z.string().min(50, 'La descripción debe tener al menos 50 caracteres'),
+  price: z.coerce.number().min(1000, 'El precio debe ser mayor a $1,000'),
+  type: z.enum(['house', 'apartment', 'land', 'commercial'], {
+    message: 'Selecciona un tipo de propiedad válido'
+  }),
+  status: z.enum(['available', 'sold', 'rented', 'reserved'], {
+    message: 'Selecciona un estado válido'
+  }),
+  province: z.string().min(1, 'Selecciona una provincia'),
+  city: z.string().min(2, 'Ingresa la ciudad'),
+  address: z.string().min(10, 'Ingresa la dirección completa'),
+  bedrooms: z.coerce.number().min(0, 'Número de dormitorios inválido').max(20, 'Máximo 20 dormitorios'),
+  bathrooms: z.coerce.number().min(0, 'Número de baños inválido').max(20, 'Máximo 20 baños'),
+  area_m2: z.coerce.number().min(10, 'El área debe ser mayor a 10 m²').max(10000, 'Máximo 10,000 m²'),
+  parking_spaces: z.coerce.number().min(0, 'Número de parqueaderos inválido').max(20, 'Máximo 20 parqueaderos'),
+  year_built: z.coerce.number().min(1900, 'Año inválido').max(new Date().getFullYear(), 'Año no puede ser futuro').optional(),
+  
+  // Amenities (boolean fields)
+  garden: z.coerce.boolean().default(false),
+  pool: z.coerce.boolean().default(false),
+  elevator: z.coerce.boolean().default(false),
+  balcony: z.coerce.boolean().default(false),
+  terrace: z.coerce.boolean().default(false),
+  garage: z.coerce.boolean().default(false),
+  furnished: z.coerce.boolean().default(false),
+  air_conditioning: z.coerce.boolean().default(false),
+  security: z.coerce.boolean().default(false),
+  
+  // Contact info
+  contact_phone: z.string().min(10, 'Ingresa un teléfono válido'),
+  contact_email: z.email('Ingresa un email válido'),
+  notes: z.string().optional(),
+});
+
+// Action result type for better error handling
+export type ActionResult<T = any> = {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: Record<string, string[]>;
+};
+
+/**
+ * Modern Create Property Server Action (2025)
+ * NO AUTH MODE - Direct backend communication
+ */
+export async function createPropertyAction(prevState: any, formData: FormData): Promise<ActionResult> {
+  try {
+    // NO AUTH MODE - Skip authentication check
+    // const cookieStore = await cookies();
+    // const accessToken = cookieStore.get('access_token')?.value;
+
+    // Modern FormData parsing with 2025 best practices
+    console.log('🔧 Server Action - Creating property with modern approach');
+    
+    const rawData = Object.fromEntries(formData);
+    console.log('🔧 Raw FormData:', rawData);
+
+    // Modern validation with Zod (server-side)
+    const validatedData = PropertySchema.safeParse(rawData);
+
+    if (!validatedData.success) {
+      const flattened = z.flattenError(validatedData.error);
+      console.log('❌ Server Action - Validation failed:', flattened);
       return {
         success: false,
-        message: 'No autenticado',
-        errors: {},
+        message: 'Datos del formulario inválidos',
+        errors: flattened.fieldErrors,
       };
     }
 
-    // Extract and convert form data
-    const rawData = {
-      title: formData.get('title') as string,
-      description: formData.get('description') as string,
-      price: parseFloat(formData.get('price') as string),
-      province: formData.get('province') as string,
-      city: formData.get('city') as string,
-      type: formData.get('type') as string,
-      status: formData.get('status') as string || 'available',
-      bedrooms: parseInt(formData.get('bedrooms') as string),
-      bathrooms: parseFloat(formData.get('bathrooms') as string),
-      area_m2: parseFloat(formData.get('area_m2') as string),
-      address: formData.get('address') as string || undefined,
-      latitude: formData.get('latitude') ? parseFloat(formData.get('latitude') as string) : undefined,
-      longitude: formData.get('longitude') ? parseFloat(formData.get('longitude') as string) : undefined,
-      featured: formData.get('featured') === 'true',
-      parking_spots: formData.get('parking_spots') ? parseInt(formData.get('parking_spots') as string) : undefined,
-      has_garden: formData.get('has_garden') === 'true',
-      has_pool: formData.get('has_pool') === 'true',
-      has_balcony: formData.get('has_balcony') === 'true',
-      has_elevator: formData.get('has_elevator') === 'true',
-      year_built: formData.get('year_built') ? parseInt(formData.get('year_built') as string) : undefined,
-    };
+    console.log('✅ Server Action - Data validated successfully');
 
-    // Validate with Zod
-    const validatedData = propertySchema.parse(rawData);
-
-    // Make API call to backend
+    // NO AUTH MODE - Direct API call without authentication
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/properties`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'RealtyCore-Dashboard/1.0 (Next.js)',
+        'User-Agent': 'Next.js-Server-Action/2025 (React-19)',
       },
-      body: JSON.stringify(validatedData),
+      body: JSON.stringify(validatedData.data),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('❌ Server Action - API Error:', errorData);
       return {
         success: false,
-        message: errorData.message || 'Error al crear la propiedad',
+        message: errorData.message || `Error del servidor: ${response.status}`,
         errors: {},
       };
     }
 
     const propertyData = await response.json();
+    console.log('✅ Server Action - Property created:', propertyData);
 
-    // Revalidate properties pages
+    // Modern revalidation for optimistic UI
     revalidatePath('/properties');
     revalidatePath('/dashboard');
 
     return {
       success: true,
       message: 'Propiedad creada exitosamente',
-      property: propertyData,
-      redirect: `/properties/${propertyData.id}`,
+      data: propertyData,
     };
 
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
+    // Enhanced error handling for 2025
+    if (error && typeof error === 'object' && 'issues' in error) {
+      // Zod validation error
+      console.log('❌ Zod validation error:', error);
       return {
         success: false,
         message: 'Datos inválidos',
-        errors: (error as any).flatten().fieldErrors,
+        errors: (error as any).flatten?.()?.fieldErrors || {},
       };
     }
 
-    console.error('Create property action error:', error);
+    console.error('💥 Server Action - Unexpected error:', error);
     return {
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Error interno del servidor. Por favor intenta de nuevo.',
       errors: {},
     };
   }
 }
 
 /**
- * Server action to update an existing property
+ * Modern Update Property Server Action (2025)
+ * NO AUTH MODE - Direct backend communication
  */
-export async function updatePropertyAction(propertyId: string, prevState: any, formData: FormData) {
+export async function updatePropertyAction(propertyId: string, prevState: any, formData: FormData): Promise<ActionResult> {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
+    console.log('🔧 Server Action - Updating property:', propertyId);
 
-    if (!accessToken) {
+    const rawData = Object.fromEntries(formData);
+    const validatedData = PropertySchema.safeParse(rawData);
+
+    if (!validatedData.success) {
+      const flattened = z.flattenError(validatedData.error);
+      console.log('❌ Update validation failed:', flattened);
       return {
         success: false,
-        message: 'No autenticado',
-        errors: {},
+        message: 'Datos del formulario inválidos',
+        errors: flattened.fieldErrors,
       };
     }
 
-    // Extract and convert form data
-    const rawData = {
-      title: formData.get('title') as string,
-      description: formData.get('description') as string,
-      price: parseFloat(formData.get('price') as string),
-      province: formData.get('province') as string,
-      city: formData.get('city') as string,
-      type: formData.get('type') as string,
-      status: formData.get('status') as string,
-      bedrooms: parseInt(formData.get('bedrooms') as string),
-      bathrooms: parseFloat(formData.get('bathrooms') as string),
-      area_m2: parseFloat(formData.get('area_m2') as string),
-      address: formData.get('address') as string || undefined,
-      latitude: formData.get('latitude') ? parseFloat(formData.get('latitude') as string) : undefined,
-      longitude: formData.get('longitude') ? parseFloat(formData.get('longitude') as string) : undefined,
-      featured: formData.get('featured') === 'true',
-      parking_spots: formData.get('parking_spots') ? parseInt(formData.get('parking_spots') as string) : undefined,
-      has_garden: formData.get('has_garden') === 'true',
-      has_pool: formData.get('has_pool') === 'true',
-      has_balcony: formData.get('has_balcony') === 'true',
-      has_elevator: formData.get('has_elevator') === 'true',
-      year_built: formData.get('year_built') ? parseInt(formData.get('year_built') as string) : undefined,
-    };
-
-    // Validate with Zod
-    const validatedData = propertySchema.parse(rawData);
-
-    // Make API call to backend
+    // NO AUTH MODE - Direct API call
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/properties/${propertyId}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'RealtyCore-Dashboard/1.0 (Next.js)',
+        'User-Agent': 'Next.js-Server-Action/2025 (React-19)',
       },
-      body: JSON.stringify(validatedData),
+      body: JSON.stringify(validatedData.data),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errorData.message || 'Error al actualizar la propiedad',
+        message: errorData.message || `Error al actualizar la propiedad: ${response.status}`,
         errors: {},
       };
     }
 
     const propertyData = await response.json();
+    console.log('✅ Property updated successfully:', propertyData);
 
-    // Revalidate properties pages
+    // Modern revalidation
     revalidatePath('/properties');
     revalidatePath(`/properties/${propertyId}`);
     revalidatePath('/dashboard');
@@ -173,19 +198,11 @@ export async function updatePropertyAction(propertyId: string, prevState: any, f
     return {
       success: true,
       message: 'Propiedad actualizada exitosamente',
-      property: propertyData,
+      data: propertyData,
     };
 
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
-      return {
-        success: false,
-        message: 'Datos inválidos',
-        errors: (error as any).flatten().fieldErrors,
-      };
-    }
-
-    console.error('Update property action error:', error);
+    console.error('💥 Update property error:', error);
     return {
       success: false,
       message: 'Error interno del servidor',
@@ -195,26 +212,18 @@ export async function updatePropertyAction(propertyId: string, prevState: any, f
 }
 
 /**
- * Server action to delete a property
+ * Modern Delete Property Server Action (2025)
+ * NO AUTH MODE - Direct backend communication
  */
-export async function deletePropertyAction(propertyId: string) {
+export async function deletePropertyAction(propertyId: string): Promise<ActionResult> {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
+    console.log('🔧 Server Action - Deleting property:', propertyId);
 
-    if (!accessToken) {
-      return {
-        success: false,
-        message: 'No autenticado',
-      };
-    }
-
-    // Make API call to backend
+    // NO AUTH MODE - Direct API call
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/properties/${propertyId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'User-Agent': 'RealtyCore-Dashboard/1.0 (Next.js)',
+        'User-Agent': 'Next.js-Server-Action/2025 (React-19)',
       },
     });
 
@@ -222,22 +231,24 @@ export async function deletePropertyAction(propertyId: string) {
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errorData.message || 'Error al eliminar la propiedad',
+        message: errorData.message || `Error al eliminar la propiedad: ${response.status}`,
       };
     }
 
-    // Revalidate properties pages
+    console.log('✅ Property deleted successfully');
+
+    // Modern revalidation for optimistic UI
     revalidatePath('/properties');
     revalidatePath('/dashboard');
 
     return {
       success: true,
       message: 'Propiedad eliminada exitosamente',
-      redirect: '/properties',
+      data: { id: propertyId },
     };
 
   } catch (error) {
-    console.error('Delete property action error:', error);
+    console.error('💥 Delete property error:', error);
     return {
       success: false,
       message: 'Error interno del servidor',
@@ -246,64 +257,48 @@ export async function deletePropertyAction(propertyId: string) {
 }
 
 /**
- * Server action to upload property images
+ * Modern Upload Property Image Server Action (2025)
+ * NO AUTH MODE - Direct backend communication
  */
-export async function uploadPropertyImageAction(prevState: any, formData: FormData) {
+export async function uploadPropertyImageAction(propertyId: string, formData: FormData): Promise<ActionResult> {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
+    console.log('🔧 Server Action - Uploading image for property:', propertyId);
 
-    if (!accessToken) {
-      return {
-        success: false,
-        message: 'No autenticado',
-        errors: {},
-      };
-    }
-
-    const propertyId = formData.get('property_id') as string;
-    const altText = formData.get('alt_text') as string || '';
     const imageFile = formData.get('image') as File;
 
     if (!imageFile || imageFile.size === 0) {
       return {
         success: false,
         message: 'No se seleccionó ninguna imagen',
-        errors: {},
       };
     }
 
-    // Validate file size (10MB limit)
+    // Modern validation with enhanced limits
     if (imageFile.size > 10 * 1024 * 1024) {
       return {
         success: false,
         message: 'La imagen no puede ser mayor a 10MB',
-        errors: {},
       };
     }
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
     if (!allowedTypes.includes(imageFile.type)) {
       return {
         success: false,
         message: 'Formato de imagen no válido. Use JPEG, PNG, WebP o AVIF',
-        errors: {},
       };
     }
 
-    // Create form data for upload
+    // Prepare FormData for upload
     const uploadFormData = new FormData();
     uploadFormData.append('property_id', propertyId);
-    uploadFormData.append('alt_text', altText);
     uploadFormData.append('image', imageFile);
 
-    // Make API call to backend
+    // NO AUTH MODE - Direct API call
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/images`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'User-Agent': 'RealtyCore-Dashboard/1.0 (Next.js)',
+        'User-Agent': 'Next.js-Server-Action/2025 (React-19)',
       },
       body: uploadFormData,
     });
@@ -312,78 +307,25 @@ export async function uploadPropertyImageAction(prevState: any, formData: FormDa
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errorData.message || 'Error al subir la imagen',
-        errors: {},
+        message: errorData.message || `Error al subir la imagen: ${response.status}`,
       };
     }
 
     const imageData = await response.json();
+    console.log('✅ Image uploaded successfully:', imageData);
 
-    // Revalidate property pages
+    // Modern revalidation
     revalidatePath(`/properties/${propertyId}`);
     revalidatePath('/properties');
 
     return {
       success: true,
       message: 'Imagen subida exitosamente',
-      image: imageData,
+      data: imageData,
     };
 
   } catch (error) {
-    console.error('Upload image action error:', error);
-    return {
-      success: false,
-      message: 'Error interno del servidor',
-      errors: {},
-    };
-  }
-}
-
-/**
- * Server action to reorder property images
- */
-export async function reorderPropertyImagesAction(propertyId: string, imageOrders: { id: string; sort_order: number }[]) {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
-
-    if (!accessToken) {
-      return {
-        success: false,
-        message: 'No autenticado',
-      };
-    }
-
-    // Make API call to backend
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/properties/${propertyId}/images/reorder`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'RealtyCore-Dashboard/1.0 (Next.js)',
-      },
-      body: JSON.stringify({ images: imageOrders }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        message: errorData.message || 'Error al reordenar las imágenes',
-      };
-    }
-
-    // Revalidate property pages
-    revalidatePath(`/properties/${propertyId}`);
-    revalidatePath('/properties');
-
-    return {
-      success: true,
-      message: 'Imágenes reordenadas exitosamente',
-    };
-
-  } catch (error) {
-    console.error('Reorder images action error:', error);
+    console.error('💥 Upload image error:', error);
     return {
       success: false,
       message: 'Error interno del servidor',
@@ -392,103 +334,94 @@ export async function reorderPropertyImagesAction(propertyId: string, imageOrder
 }
 
 /**
- * Server action to set main property image
+ * Get Properties Server Action (2025)
+ * For use with React 19 hooks and Suspense
  */
-export async function setMainPropertyImageAction(propertyId: string, imageId: string) {
+export async function getPropertiesAction(searchParams?: {
+  search?: string;
+  type?: string;
+  status?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  province?: string;
+}): Promise<ActionResult<any[]>> {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
+    console.log('🔧 Server Action - Fetching properties with filters:', searchParams);
 
-    if (!accessToken) {
-      return {
-        success: false,
-        message: 'No autenticado',
-      };
-    }
+    const params = new URLSearchParams();
+    
+    if (searchParams?.search) params.append('q', searchParams.search);
+    if (searchParams?.type) params.append('type', searchParams.type);
+    if (searchParams?.status) params.append('status', searchParams.status);
+    if (searchParams?.minPrice) params.append('min_price', searchParams.minPrice);
+    if (searchParams?.maxPrice) params.append('max_price', searchParams.maxPrice);
+    if (searchParams?.province) params.append('province', searchParams.province);
 
-    // Make API call to backend
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/properties/${propertyId}/images/main`, {
-      method: 'POST',
+    const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/properties/filter?${params.toString()}`;
+    
+    const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'RealtyCore-Dashboard/1.0 (Next.js)',
+        'User-Agent': 'Next.js-Server-Action/2025 (React-19)',
       },
-      body: JSON.stringify({ image_id: imageId }),
+      next: { revalidate: 60 }, // Cache for 60 seconds
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        message: errorData.message || 'Error al establecer imagen principal',
-      };
+      throw new Error(`API Error: ${response.status}`);
     }
 
-    // Revalidate property pages
-    revalidatePath(`/properties/${propertyId}`);
-    revalidatePath('/properties');
-
+    const result = await response.json();
+    console.log('✅ Properties fetched successfully:', result.data?.length || 0, 'properties');
+    
     return {
       success: true,
-      message: 'Imagen principal establecida exitosamente',
+      data: result.data || result,
     };
 
   } catch (error) {
-    console.error('Set main image action error:', error);
+    console.error('💥 Get Properties Server Action Error:', error);
     return {
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Error cargando las propiedades.',
+      data: [], // Return empty array as fallback
     };
   }
 }
 
 /**
- * Server action to delete property image
+ * Modern Progressive Enhancement Action (2025)
+ * For traditional form submission (works without JS)
+ * Enhanced with better error handling and UX
  */
-export async function deletePropertyImageAction(imageId: string, propertyId: string) {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('access_token')?.value;
+export async function createPropertyWithRedirectAction(formData: FormData) {
+  console.log('🔧 Progressive Enhancement - Processing form without JavaScript');
+  
+  const result = await createPropertyAction(null, formData);
+  
+  if (result.success) {
+    console.log('✅ Progressive Enhancement - Property created, redirecting');
+    // Success: redirect to properties list
+    redirect('/properties?created=success&message=Propiedad+creada+exitosamente');
+  } else {
+    console.error('❌ Progressive Enhancement - Creation failed:', result.message);
+    // Error: redirect back with error message
+    const errorMsg = encodeURIComponent(result.message || 'Error al crear la propiedad');
+    redirect(`/properties?created=error&message=${errorMsg}`);
+  }
+}
 
-    if (!accessToken) {
-      return {
-        success: false,
-        message: 'No autenticado',
-      };
-    }
-
-    // Make API call to backend
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/images/${imageId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'User-Agent': 'RealtyCore-Dashboard/1.0 (Next.js)',
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        message: errorData.message || 'Error al eliminar la imagen',
-      };
-    }
-
-    // Revalidate property pages
-    revalidatePath(`/properties/${propertyId}`);
-    revalidatePath('/properties');
-
-    return {
-      success: true,
-      message: 'Imagen eliminada exitosamente',
-    };
-
-  } catch (error) {
-    console.error('Delete image action error:', error);
-    return {
-      success: false,
-      message: 'Error interno del servidor',
-    };
+/**
+ * Progressive Enhancement Update Action (2025)
+ */
+export async function updatePropertyWithRedirectAction(propertyId: string, formData: FormData) {
+  console.log('🔧 Progressive Enhancement - Updating property:', propertyId);
+  
+  const result = await updatePropertyAction(propertyId, null, formData);
+  
+  if (result.success) {
+    redirect(`/properties?updated=success&message=Propiedad+actualizada+exitosamente`);
+  } else {
+    const errorMsg = encodeURIComponent(result.message || 'Error al actualizar la propiedad');
+    redirect(`/properties?updated=error&message=${errorMsg}`);
   }
 }

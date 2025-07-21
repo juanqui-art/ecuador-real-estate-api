@@ -37,14 +37,15 @@ const editPropertySchema = z.object({
   area_m2: z.number().optional(), // No editable
   parking_spaces: z.number().min(0, 'Número de parqueaderos inválido').max(20, 'Máximo 20 parqueaderos'),
   year_built: z.number().optional(), // No editable
-  has_garden: z.boolean().optional(), // No editable
-  has_pool: z.boolean().optional(), // No editable
-  has_elevator: z.boolean().optional(), // No editable
-  has_balcony: z.boolean().optional(), // No editable
-  has_terrace: z.boolean().optional(), // No editable
-  has_garage: z.boolean().optional(), // No editable
-  is_furnished: z.boolean().optional(), // No editable
-  allows_pets: z.boolean().optional(), // No editable
+  garden: z.boolean().optional(), // No editable
+  pool: z.boolean().optional(), // No editable
+  elevator: z.boolean().optional(), // No editable
+  balcony: z.boolean().optional(), // No editable
+  terrace: z.boolean().optional(), // No editable
+  garage: z.boolean().optional(), // No editable
+  furnished: z.boolean().optional(), // No editable
+  air_conditioning: z.boolean().optional(), // No editable
+  security: z.boolean().optional(), // No editable
   contact_phone: z.string().optional(), // No editable
   contact_email: z.string().optional(), // No editable
   notes: z.string().optional(), // No editable
@@ -178,7 +179,7 @@ export function EditPropertyForm({ property, onSuccess, onCancel }: EditProperty
         city: data.city,
         parking_spaces: data.parking_spaces,
       };
-      const response = await apiClient.put(`/properties/${property.id}`, updateData);
+      const response = await apiClient.put(`/api/properties/${property.id}`, updateData);
       return response.data;
     },
     onSuccess: () => {

@@ -11,6 +11,6 @@ func main() {
 	if err \!= nil {
 		panic(err)
 	}
-	fmt.Printf("%s
-", hash)
+	fmt.Printf("%s\n", hash)
 }
+EOF < /dev/null
