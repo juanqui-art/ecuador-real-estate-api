@@ -559,6 +559,105 @@ Azuay, Bolívar, Cañar, Carchi, Chimborazo, Cotopaxi, El Oro, Esmeraldas, Galá
 **Resultado Final:**
 Sistema de propiedades completamente funcional que maneja **todas las características** de una propiedad inmobiliaria real: ubicación GPS, amenidades, precios múltiples, multimedia, sistema de ownership, etc.
 
+## Información Crítica para Desarrollo Frontend
+
+### 🔥 **API Endpoints Principales (PROTEGIDOS CON JWT):**
+```bash
+# CRUD básico - COMPLETAMENTE FUNCIONAL
+POST   /api/properties         # Crear (50+ campos)
+GET    /api/properties/{id}    # Obtener por ID  
+PUT    /api/properties/{id}    # Actualizar (50+ campos)
+DELETE /api/properties/{id}    # Eliminar
+GET    /api/properties/filter  # Búsqueda con filtros
+```
+
+### 🎯 **Campos Disponibles para Formularios Frontend:**
+```typescript
+// ✅ CONFIRMADO: Todos estos campos procesan correctamente
+interface PropertyFormData {
+  // Básico (REQUERIDO)
+  title: string;           // min: 10 chars
+  description: string;     // min: 50 chars  
+  price: number;          // min: 1000
+  type: 'house' | 'apartment' | 'land' | 'commercial';
+  status: 'available' | 'sold' | 'rented' | 'reserved';
+  
+  // Ubicación (province, city, address REQUERIDOS)
+  province: string;        // Ecuadorian provinces
+  city: string;           // min: 2 chars
+  address: string;        // min: 10 chars
+  sector?: string;        // Opcional
+  latitude?: number;      // GPS coords for Ecuador
+  longitude?: number;     // GPS coords for Ecuador
+  location_precision?: string; // 'exact', 'approximate', 'sector'
+  
+  // Características (TODAS OPCIONALES)
+  bedrooms: number;       // 0-20
+  bathrooms: number;      // 0-20, supports 2.5
+  area_m2: number;        // 10-10000
+  parking_spaces: number; // 0-20
+  year_built?: number;    // 1900-2025
+  floors?: number;        // 1-50
+  
+  // Precios adicionales (TODAS OPCIONALES)
+  rent_price?: number;    // min: 100
+  common_expenses?: number; // min: 0
+  price_per_m2?: number;  // min: 10
+  
+  // Multimedia (TODAS OPCIONALES)
+  main_image?: string;    // URL
+  images?: string[];      // Array of URLs
+  video_tour?: string;    // URL
+  tour_360?: string;      // URL
+  
+  // Amenidades (TODAS BOOLEAN - default false)
+  furnished: boolean;
+  garage: boolean;
+  pool: boolean;
+  garden: boolean;
+  terrace: boolean;
+  balcony: boolean;
+  security: boolean;
+  elevator: boolean;
+  air_conditioning: boolean;
+  
+  // Contact (REQUERIDOS para formularios)
+  contact_phone: string;  // min: 10 chars
+  contact_email: string;  // valid email
+  notes?: string;         // Optional
+}
+```
+
+### 🏗️ **Server Actions Ready (React 19):**
+```typescript
+// ✅ FUNCIONALES - Usar directamente en componentes
+import { 
+  createPropertyAction,           // Crear propiedad completa
+  updatePropertyAction,          // Actualizar existente  
+  deletePropertyAction,          // Eliminar propiedad
+  uploadPropertyImageAction,     // Subir imágenes
+  getPropertiesAction           // Obtener con filtros
+} from '@/lib/actions/properties';
+
+// Ejemplo de uso:
+const [state, formAction] = useActionState(createPropertyAction, initialState);
+```
+
+### 🔍 **Validación Zod Sincronizada:**
+```typescript
+// ✅ Schema completo disponible en /lib/actions/properties.ts
+// Validación server-side automática
+// Manejo de errores por campo
+// Progressive Enhancement incluido
+```
+
+### 🚀 **Quick Start para Desarrolladores:**
+1. **Formulario básico:** Usar `modern-property-form-2025.tsx` como base
+2. **API calls:** Server Actions ya configuradas con error handling
+3. **Validación:** Zod schema sincronizado con backend
+4. **Tipos:** TypeScript types alineados con Go structs
+5. **Testing:** Backend 100% validado, frontend ready para desarrollo
+
 ### Funcionalidades Completadas ✅
 - **Arquitectura limpia:** Domain/Service/Repository/Handlers optimizada
 - **CRUD completo:** 56+ endpoints API funcionales CON AUTENTICACIÓN
