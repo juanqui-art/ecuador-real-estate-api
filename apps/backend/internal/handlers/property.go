@@ -24,14 +24,69 @@ func NewPropertyHandler(service service.PropertyServiceInterface) *PropertyHandl
 }
 
 // CreatePropertyRequest represents the request structure for creating a property
+// Updated to match complete domain Property struct - ALL 50+ fields supported (2025)
 type CreatePropertyRequest struct {
+	// Basic Information
 	Title         string  `json:"title"`
 	Description   string  `json:"description"`
 	Price         float64 `json:"price"`
-	Province      string  `json:"province"`
-	City          string  `json:"city"`
 	Type          string  `json:"type"`
+	Status        string  `json:"status"`
+	
+	// Location (expanded with all domain fields)
+	Province          string  `json:"province"`
+	City              string  `json:"city"`
+	Sector            string  `json:"sector,omitempty"`
+	Address           string  `json:"address,omitempty"`
+	Latitude          float64 `json:"latitude,omitempty"`
+	Longitude         float64 `json:"longitude,omitempty"`
+	LocationPrecision string  `json:"location_precision,omitempty"`
+	
+	// Property Characteristics (expanded)
+	Bedrooms      int     `json:"bedrooms"`
+	Bathrooms     float32 `json:"bathrooms"`
+	AreaM2        float64 `json:"area_m2"`
 	ParkingSpaces int     `json:"parking_spaces"`
+	YearBuilt     *int    `json:"year_built,omitempty"`
+	Floors        *int    `json:"floors,omitempty"`
+	
+	// Additional Pricing
+	RentPrice      *float64 `json:"rent_price,omitempty"`
+	CommonExpenses *float64 `json:"common_expenses,omitempty"`
+	PricePerM2     *float64 `json:"price_per_m2,omitempty"`
+	
+	// Multimedia
+	MainImage *string  `json:"main_image,omitempty"`
+	Images    []string `json:"images,omitempty"`
+	VideoTour *string  `json:"video_tour,omitempty"`
+	Tour360   *string  `json:"tour_360,omitempty"`
+	
+	// State and Classification
+	PropertyStatus string   `json:"property_status,omitempty"`
+	Tags           []string `json:"tags,omitempty"`
+	Featured       bool     `json:"featured"`
+	
+	// Amenities (boolean fields) - complete set
+	Garden            bool `json:"garden"`
+	Pool              bool `json:"pool"`
+	Elevator          bool `json:"elevator"`
+	Balcony           bool `json:"balcony"`
+	Terrace           bool `json:"terrace"`
+	Garage            bool `json:"garage"`
+	Furnished         bool `json:"furnished"`
+	AirConditioning   bool `json:"air_conditioning"`
+	Security          bool `json:"security"`
+	
+	// Ownership System (optional for forms, handled by backend)
+	RealEstateCompanyID *string `json:"real_estate_company_id,omitempty"`
+	OwnerID             *string `json:"owner_id,omitempty"`
+	AgentID             *string `json:"agent_id,omitempty"`
+	AgencyID            *string `json:"agency_id,omitempty"`
+	
+	// Contact Information (temporary until user system)
+	ContactPhone  string `json:"contact_phone"`
+	ContactEmail  string `json:"contact_email"`
+	Notes         string `json:"notes,omitempty"`
 }
 
 
@@ -48,15 +103,73 @@ func (h *PropertyHandler) CreateProperty(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	property, err := h.service.CreateProperty(
-		req.Title,
-		req.Description,
-		req.Province,
-		req.City,
-		req.Type,
-		req.Price,
-		req.ParkingSpaces,
-	)
+	// Convert CreatePropertyRequest to service CreatePropertyFullRequest
+	// Updated to map ALL 50+ fields from expanded structs (2025)
+	serviceReq := service.CreatePropertyFullRequest{
+		// Basic Information
+		Title:         req.Title,
+		Description:   req.Description,
+		Price:         req.Price,
+		Type:          req.Type,
+		Status:        req.Status,
+		
+		// Location (expanded)
+		Province:          req.Province,
+		City:              req.City,
+		Sector:            req.Sector,
+		Address:           req.Address,
+		Latitude:          req.Latitude,
+		Longitude:         req.Longitude,
+		LocationPrecision: req.LocationPrecision,
+		
+		// Property Characteristics (expanded)
+		Bedrooms:      req.Bedrooms,
+		Bathrooms:     req.Bathrooms,
+		AreaM2:        req.AreaM2,
+		ParkingSpaces: req.ParkingSpaces,
+		YearBuilt:     req.YearBuilt,
+		Floors:        req.Floors,
+		
+		// Additional Pricing
+		RentPrice:      req.RentPrice,
+		CommonExpenses: req.CommonExpenses,
+		PricePerM2:     req.PricePerM2,
+		
+		// Multimedia
+		MainImage: req.MainImage,
+		Images:    req.Images,
+		VideoTour: req.VideoTour,
+		Tour360:   req.Tour360,
+		
+		// State and Classification
+		PropertyStatus: req.PropertyStatus,
+		Tags:           req.Tags,
+		Featured:       req.Featured,
+		
+		// Amenities (complete set)
+		Garden:            req.Garden,
+		Pool:              req.Pool,
+		Elevator:          req.Elevator,
+		Balcony:           req.Balcony,
+		Terrace:           req.Terrace,
+		Garage:            req.Garage,
+		Furnished:         req.Furnished,
+		AirConditioning:   req.AirConditioning,
+		Security:          req.Security,
+		
+		// Ownership System
+		RealEstateCompanyID: req.RealEstateCompanyID,
+		OwnerID:             req.OwnerID,
+		AgentID:             req.AgentID,
+		AgencyID:            req.AgencyID,
+		
+		// Contact Information
+		ContactPhone:  req.ContactPhone,
+		ContactEmail:  req.ContactEmail,
+		Notes:         req.Notes,
+	}
+
+	property, err := h.service.CreatePropertyComplete(serviceReq)
 
 	if err != nil {
 		h.respondError(w, http.StatusBadRequest, err.Error())

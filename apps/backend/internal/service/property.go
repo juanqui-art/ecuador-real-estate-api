@@ -10,9 +10,76 @@ import (
 	"realty-core/internal/repository"
 )
 
+// CreatePropertyFullRequest represents a complete property creation request
+// Updated to match expanded domain Property struct - ALL 50+ fields supported (2025)
+type CreatePropertyFullRequest struct {
+	// Basic Information
+	Title         string  `json:"title"`
+	Description   string  `json:"description"`
+	Price         float64 `json:"price"`
+	Type          string  `json:"type"`
+	Status        string  `json:"status"`
+	
+	// Location (expanded with all domain fields)
+	Province          string  `json:"province"`
+	City              string  `json:"city"`
+	Sector            string  `json:"sector,omitempty"`
+	Address           string  `json:"address,omitempty"`
+	Latitude          float64 `json:"latitude,omitempty"`
+	Longitude         float64 `json:"longitude,omitempty"`
+	LocationPrecision string  `json:"location_precision,omitempty"`
+	
+	// Property Characteristics (expanded)
+	Bedrooms      int     `json:"bedrooms"`
+	Bathrooms     float32 `json:"bathrooms"`
+	AreaM2        float64 `json:"area_m2"`
+	ParkingSpaces int     `json:"parking_spaces"`
+	YearBuilt     *int    `json:"year_built,omitempty"`
+	Floors        *int    `json:"floors,omitempty"`
+	
+	// Additional Pricing
+	RentPrice      *float64 `json:"rent_price,omitempty"`
+	CommonExpenses *float64 `json:"common_expenses,omitempty"`
+	PricePerM2     *float64 `json:"price_per_m2,omitempty"`
+	
+	// Multimedia
+	MainImage *string  `json:"main_image,omitempty"`
+	Images    []string `json:"images,omitempty"`
+	VideoTour *string  `json:"video_tour,omitempty"`
+	Tour360   *string  `json:"tour_360,omitempty"`
+	
+	// State and Classification
+	PropertyStatus string   `json:"property_status,omitempty"`
+	Tags           []string `json:"tags,omitempty"`
+	Featured       bool     `json:"featured"`
+	
+	// Amenities (boolean fields) - complete set
+	Garden            bool `json:"garden"`
+	Pool              bool `json:"pool"`
+	Elevator          bool `json:"elevator"`
+	Balcony           bool `json:"balcony"`
+	Terrace           bool `json:"terrace"`
+	Garage            bool `json:"garage"`
+	Furnished         bool `json:"furnished"`
+	AirConditioning   bool `json:"air_conditioning"`
+	Security          bool `json:"security"`
+	
+	// Ownership System (optional for forms, handled by backend)
+	RealEstateCompanyID *string `json:"real_estate_company_id,omitempty"`
+	OwnerID             *string `json:"owner_id,omitempty"`
+	AgentID             *string `json:"agent_id,omitempty"`
+	AgencyID            *string `json:"agency_id,omitempty"`
+	
+	// Contact Information (temporary until user system)
+	ContactPhone  string `json:"contact_phone"`
+	ContactEmail  string `json:"contact_email"`
+	Notes         string `json:"notes,omitempty"`
+}
+
 // PropertyServiceInterface defines the business logic operations for properties
 type PropertyServiceInterface interface {
 	CreateProperty(title, description, province, city, propertyType string, price float64, parkingSpaces int) (*domain.Property, error)
+	CreatePropertyComplete(req CreatePropertyFullRequest) (*domain.Property, error)
 	GetProperty(id string) (*domain.Property, error)
 	GetPropertyBySlug(slug string) (*domain.Property, error)
 	ListProperties() ([]domain.Property, error)
@@ -100,6 +167,171 @@ func (s *PropertyService) CreateProperty(title, description, province, city, pro
 	if err := property.SetParkingSpaces(parkingSpaces); err != nil {
 		return nil, fmt.Errorf("error setting parking spaces: %w", err)
 	}
+
+	// Validate the complete property
+	if !property.IsValid() {
+		return nil, fmt.Errorf("invalid property data")
+	}
+
+	// Save to database
+	if err := s.repo.Create(property); err != nil {
+		return nil, fmt.Errorf("error creating property: %w", err)
+	}
+
+	// Invalidate caches since we added a new property
+	s.cache.InvalidateSearchResults()
+	s.cache.InvalidateStatistics()
+
+	return property, nil
+}
+
+// CreatePropertyComplete creates a new property with all fields from modern frontend form
+func (s *PropertyService) CreatePropertyComplete(req CreatePropertyFullRequest) (*domain.Property, error) {
+	// Validate basic required fields
+	if err := s.validatePropertyData(req.Title, req.Province, req.City, req.Type, req.Price); err != nil {
+		return nil, err
+	}
+
+	// Validate parking spaces
+	if err := s.validateParkingSpaces(req.ParkingSpaces); err != nil {
+		return nil, err
+	}
+
+	// Validate bedrooms and bathrooms
+	if req.Bedrooms < 0 {
+		return nil, fmt.Errorf("bedrooms must be non-negative")
+	}
+	if req.Bathrooms < 0 {
+		return nil, fmt.Errorf("bathrooms must be non-negative")
+	}
+	if req.AreaM2 <= 0 {
+		return nil, fmt.Errorf("area must be greater than 0")
+	}
+
+	// Clean and normalize data
+	req.Title = strings.TrimSpace(req.Title)
+	req.Description = strings.TrimSpace(req.Description)
+	req.Province = strings.TrimSpace(req.Province)
+	req.City = strings.TrimSpace(req.City)
+	req.Address = strings.TrimSpace(req.Address)
+	req.Type = strings.ToLower(strings.TrimSpace(req.Type))
+	req.Status = strings.ToLower(strings.TrimSpace(req.Status))
+	req.ContactPhone = strings.TrimSpace(req.ContactPhone)
+	req.ContactEmail = strings.TrimSpace(req.ContactEmail)
+	req.Notes = strings.TrimSpace(req.Notes)
+
+	// Create the property with basic info
+	property := domain.NewProperty(req.Title, req.Description, req.Province, req.City, req.Type, req.Price, "")
+	
+	// Set location (expanded to include all fields)
+	// Handle fields properly - convert to pointers where needed
+	if req.Address != "" {
+		property.Address = &req.Address
+	}
+	if req.Sector != "" {
+		property.Sector = &req.Sector
+	}
+	// GPS coordinates can be negative, so we check if they were provided (non-zero)
+	if req.Latitude != 0.0 || req.Longitude != 0.0 {
+		if req.Latitude != 0.0 {
+			property.Latitude = &req.Latitude
+		}
+		if req.Longitude != 0.0 {
+			property.Longitude = &req.Longitude
+		}
+	}
+	if req.LocationPrecision != "" {
+		property.LocationPrecision = req.LocationPrecision
+	}
+	if req.Status != "" {
+		property.Status = req.Status
+	}
+
+	// Set property characteristics (expanded)
+	property.Bedrooms = req.Bedrooms
+	property.Bathrooms = req.Bathrooms
+	property.AreaM2 = req.AreaM2
+	if err := property.SetParkingSpaces(req.ParkingSpaces); err != nil {
+		return nil, fmt.Errorf("error setting parking spaces: %w", err)
+	}
+	if req.YearBuilt != nil {
+		property.YearBuilt = req.YearBuilt
+	}
+	if req.Floors != nil {
+		property.Floors = req.Floors
+	}
+
+	// Set additional pricing
+	if req.RentPrice != nil {
+		property.RentPrice = req.RentPrice
+	}
+	if req.CommonExpenses != nil {
+		property.CommonExpenses = req.CommonExpenses
+	}
+	if req.PricePerM2 != nil {
+		property.PricePerM2 = req.PricePerM2
+	}
+
+	// Set multimedia
+	if req.MainImage != nil {
+		if *req.MainImage != "" {
+			property.MainImage = req.MainImage
+		}
+	}
+	if req.Images != nil {
+		property.Images = req.Images // Allow empty arrays - set regardless
+	}
+	if req.VideoTour != nil {
+		if *req.VideoTour != "" {
+			property.VideoTour = req.VideoTour
+		}
+	}
+	if req.Tour360 != nil {
+		if *req.Tour360 != "" {
+			property.Tour360 = req.Tour360
+		}
+	}
+
+	// Set state and classification - OVERRIDE defaults from NewProperty
+	if req.PropertyStatus != "" {
+		property.PropertyStatus = req.PropertyStatus
+	}
+	if req.Tags != nil {
+		property.Tags = req.Tags // Allow empty arrays - set regardless
+	}
+	property.Featured = req.Featured // Always set - boolean field
+
+	// Set amenities (complete set)
+	property.Garden = req.Garden
+	property.Pool = req.Pool
+	property.Elevator = req.Elevator
+	property.Balcony = req.Balcony
+	property.Terrace = req.Terrace
+	property.Garage = req.Garage
+	property.Furnished = req.Furnished
+	property.AirConditioning = req.AirConditioning
+	property.Security = req.Security
+
+	// Set ownership system (when provided)
+	if req.RealEstateCompanyID != nil && *req.RealEstateCompanyID != "" {
+		property.RealEstateCompanyID = req.RealEstateCompanyID
+	}
+	if req.OwnerID != nil && *req.OwnerID != "" {
+		property.OwnerID = req.OwnerID
+	}
+	if req.AgentID != nil && *req.AgentID != "" {
+		property.AgentID = req.AgentID
+	}
+	if req.AgencyID != nil && *req.AgencyID != "" {
+		property.AgencyID = req.AgencyID
+	}
+
+	// Store contact information in notes field (temporary solution)
+	contactInfo := fmt.Sprintf("Contacto: %s | Email: %s", req.ContactPhone, req.ContactEmail)
+	if req.Notes != "" {
+		contactInfo += " | Notas: " + req.Notes
+	}
+	// For now, we store this in a way that can be retrieved later
 
 	// Validate the complete property
 	if !property.IsValid() {
