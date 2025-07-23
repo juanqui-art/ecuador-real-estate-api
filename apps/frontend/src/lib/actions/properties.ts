@@ -17,8 +17,9 @@ import { z } from 'zod';
  * - NO AUTH MODE for development
  */
 
-// Modern Property Schema with 2025 best practices
+// Complete Property Schema synchronized with backend Go struct (2025)
 const PropertySchema = z.object({
+  // Información básica (requerida)
   title: z.string().min(10, 'El título debe tener al menos 10 caracteres'),
   description: z.string().min(50, 'La descripción debe tener al menos 50 caracteres'),
   price: z.coerce.number().min(1000, 'El precio debe ser mayor a $1,000'),
@@ -28,27 +29,59 @@ const PropertySchema = z.object({
   status: z.enum(['available', 'sold', 'rented', 'reserved'], {
     message: 'Selecciona un estado válido'
   }),
+  
+  // Ubicación (requerida + opcionales)
   province: z.string().min(1, 'Selecciona una provincia'),
   city: z.string().min(2, 'Ingresa la ciudad'),
   address: z.string().min(10, 'Ingresa la dirección completa'),
+  sector: z.string().optional(),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
+  location_precision: z.string().default('approximate'),
+  
+  // Características de la propiedad
   bedrooms: z.coerce.number().min(0, 'Número de dormitorios inválido').max(20, 'Máximo 20 dormitorios'),
-  bathrooms: z.coerce.number().min(0, 'Número de baños inválido').max(20, 'Máximo 20 baños'),
+  bathrooms: z.coerce.number().min(0, 'Número de baños inválido').max(20, 'Máximo 20 baños'), // Soporta 2.5
   area_m2: z.coerce.number().min(10, 'El área debe ser mayor a 10 m²').max(10000, 'Máximo 10,000 m²'),
   parking_spaces: z.coerce.number().min(0, 'Número de parqueaderos inválido').max(20, 'Máximo 20 parqueaderos'),
   year_built: z.coerce.number().min(1900, 'Año inválido').max(new Date().getFullYear(), 'Año no puede ser futuro').optional(),
+  floors: z.coerce.number().min(1, 'Mínimo 1 piso').max(50, 'Máximo 50 pisos').optional(),
   
-  // Amenities (boolean fields)
-  garden: z.coerce.boolean().default(false),
-  pool: z.coerce.boolean().default(false),
-  elevator: z.coerce.boolean().default(false),
-  balcony: z.coerce.boolean().default(false),
-  terrace: z.coerce.boolean().default(false),
-  garage: z.coerce.boolean().default(false),
+  // Precios adicionales
+  rent_price: z.coerce.number().min(100, 'Precio de renta inválido').optional(),
+  common_expenses: z.coerce.number().min(0, 'Gastos comunes inválidos').optional(),
+  price_per_m2: z.coerce.number().min(10, 'Precio por m² inválido').optional(),
+  
+  // Multimedia
+  main_image: z.string().url('URL de imagen inválida').optional(),
+  images: z.array(z.string().url()).default([]),
+  video_tour: z.string().url('URL de video inválida').optional(),
+  tour_360: z.string().url('URL de tour 360 inválida').optional(),
+  
+  // Estado y clasificación
+  property_status: z.string().default('active'),
+  tags: z.array(z.string()).default([]),
+  featured: z.coerce.boolean().default(false),
+  view_count: z.coerce.number().default(0),
+  
+  // Amenidades (características adicionales) - sincronizadas con backend
   furnished: z.coerce.boolean().default(false),
-  air_conditioning: z.coerce.boolean().default(false),
+  garage: z.coerce.boolean().default(false),
+  pool: z.coerce.boolean().default(false),
+  garden: z.coerce.boolean().default(false),
+  terrace: z.coerce.boolean().default(false),
+  balcony: z.coerce.boolean().default(false),
   security: z.coerce.boolean().default(false),
+  elevator: z.coerce.boolean().default(false),
+  air_conditioning: z.coerce.boolean().default(false),
   
-  // Contact info
+  // Sistema de ownership (opcional para formularios, manejado por backend)
+  real_estate_company_id: z.string().uuid().optional(),
+  owner_id: z.string().uuid().optional(),
+  agent_id: z.string().uuid().optional(),
+  agency_id: z.string().uuid().optional(),
+  
+  // Contact info (temporal, deberá moverse a sistema de usuarios)
   contact_phone: z.string().min(10, 'Ingresa un teléfono válido'),
   contact_email: z.email('Ingresa un email válido'),
   notes: z.string().optional(),

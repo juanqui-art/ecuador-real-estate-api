@@ -303,6 +303,20 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                                 )}
                             </div>
 
+                            {/* Sector */}
+                            <div className="col-span-2">
+                                <Label htmlFor="sector">Sector</Label>
+                                <Input
+                                    id="sector"
+                                    name="sector"
+                                    placeholder="Ej: Norte, Centro, La Puntilla"
+                                    className={state.errors?.sector ? 'border-red-500' : ''}
+                                />
+                                {state.errors?.sector && (
+                                    <p className="text-sm text-red-500 mt-1">{state.errors.sector[0]}</p>
+                                )}
+                            </div>
+
                             {/* Address */}
                             <div className="col-span-full">
                                 <Label htmlFor="address">Dirección completa *</Label>
@@ -406,7 +420,7 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                             </div>
 
                             {/* Year Built */}
-                            <div className="col-span-2">
+                            <div>
                                 <Label htmlFor="year_built">Año de construcción</Label>
                                 <Input
                                     id="year_built"
@@ -419,6 +433,87 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                                 />
                                 {state.errors?.year_built && (
                                     <p className="text-sm text-red-500 mt-1">{state.errors.year_built[0]}</p>
+                                )}
+                            </div>
+
+                            {/* Floors */}
+                            <div>
+                                <Label htmlFor="floors">Número de pisos</Label>
+                                <Input
+                                    id="floors"
+                                    name="floors"
+                                    type="number"
+                                    min="1"
+                                    max="50"
+                                    placeholder="2"
+                                    className={state.errors?.floors ? 'border-red-500' : ''}
+                                />
+                                {state.errors?.floors && (
+                                    <p className="text-sm text-red-500 mt-1">{state.errors.floors[0]}</p>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Additional Pricing */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-blue-600"/>
+                            Precios Adicionales
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Rent Price */}
+                            <div>
+                                <Label htmlFor="rent_price">Precio de renta (USD)</Label>
+                                <Input
+                                    id="rent_price"
+                                    name="rent_price"
+                                    type="number"
+                                    min="100"
+                                    step="50"
+                                    placeholder="1200"
+                                    className={state.errors?.rent_price ? 'border-red-500' : ''}
+                                />
+                                {state.errors?.rent_price && (
+                                    <p className="text-sm text-red-500 mt-1">{state.errors.rent_price[0]}</p>
+                                )}
+                            </div>
+
+                            {/* Common Expenses */}
+                            <div>
+                                <Label htmlFor="common_expenses">Gastos comunes (USD)</Label>
+                                <Input
+                                    id="common_expenses"
+                                    name="common_expenses"
+                                    type="number"
+                                    min="0"
+                                    step="10"
+                                    placeholder="150"
+                                    className={state.errors?.common_expenses ? 'border-red-500' : ''}
+                                />
+                                {state.errors?.common_expenses && (
+                                    <p className="text-sm text-red-500 mt-1">{state.errors.common_expenses[0]}</p>
+                                )}
+                            </div>
+
+                            {/* Price per M2 */}
+                            <div>
+                                <Label htmlFor="price_per_m2">Precio por m² (USD)</Label>
+                                <Input
+                                    id="price_per_m2"
+                                    name="price_per_m2"
+                                    type="number"
+                                    min="10"
+                                    step="10"
+                                    placeholder="890"
+                                    className={state.errors?.price_per_m2 ? 'border-red-500' : ''}
+                                />
+                                {state.errors?.price_per_m2 && (
+                                    <p className="text-sm text-red-500 mt-1">{state.errors.price_per_m2[0]}</p>
                                 )}
                             </div>
                         </div>
