@@ -1,4 +1,3 @@
 # pnpm workspace configuration for realty-core monorepo
 packages:
   - 'apps/frontend'
-  - 'packages/shared'
