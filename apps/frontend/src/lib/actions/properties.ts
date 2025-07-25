@@ -18,8 +18,9 @@ import { z } from 'zod';
  */
 
 // Complete Property Schema synchronized with backend Go struct (2025)
+// OPTIMIZED: Reduced from 15 to 7 required fields for better UX
 const PropertySchema = z.object({
-  // Información básica (requerida)
+  // OBLIGATORIOS: Información básica esencial (5 campos)
   title: z.string().min(10, 'El título debe tener al menos 10 caracteres'),
   description: z.string().min(50, 'La descripción debe tener al menos 50 caracteres'),
   price: z.coerce.number().min(1000, 'El precio debe ser mayor a $1,000'),
@@ -30,20 +31,20 @@ const PropertySchema = z.object({
     message: 'Selecciona un estado válido'
   }),
   
-  // Ubicación (requerida + opcionales)
-  province: z.string().min(1, 'Selecciona una provincia'),
-  city: z.string().min(2, 'Ingresa la ciudad'),
-  address: z.string().min(10, 'Ingresa la dirección completa'),
+  // OPCIONALES: Ubicación (puede completarse gradualmente)
+  province: z.string().min(1, 'Selecciona una provincia').optional(),
+  city: z.string().min(2, 'Ingresa la ciudad').optional(),
+  address: z.string().min(10, 'Ingresa la dirección completa').optional(),
   sector: z.string().optional(),
   latitude: z.coerce.number().optional(),
   longitude: z.coerce.number().optional(),
   location_precision: z.string().default('approximate'),
   
-  // Características de la propiedad
-  bedrooms: z.coerce.number().min(0, 'Número de dormitorios inválido').max(20, 'Máximo 20 dormitorios'),
-  bathrooms: z.coerce.number().min(0, 'Número de baños inválido').max(20, 'Máximo 20 baños'), // Soporta 2.5
-  area_m2: z.coerce.number().min(10, 'El área debe ser mayor a 10 m²').max(10000, 'Máximo 10,000 m²'),
-  parking_spaces: z.coerce.number().min(0, 'Número de parqueaderos inválido').max(20, 'Máximo 20 parqueaderos'),
+  // OPCIONALES: Características (con defaults inteligentes)
+  bedrooms: z.coerce.number().min(0, 'Número de dormitorios inválido').max(20, 'Máximo 20 dormitorios').default(1),
+  bathrooms: z.coerce.number().min(0, 'Número de baños inválido').max(20, 'Máximo 20 baños').default(1), // Soporta 2.5
+  area_m2: z.coerce.number().min(10, 'El área debe ser mayor a 10 m²').max(10000, 'Máximo 10,000 m²').optional(),
+  parking_spaces: z.coerce.number().min(0, 'Número de parqueaderos inválido').max(20, 'Máximo 20 parqueaderos').default(1),
   year_built: z.coerce.number().min(1900, 'Año inválido').max(new Date().getFullYear(), 'Año no puede ser futuro').optional(),
   floors: z.coerce.number().min(1, 'Mínimo 1 piso').max(50, 'Máximo 50 pisos').optional(),
   
@@ -59,8 +60,10 @@ const PropertySchema = z.object({
   tour_360: z.string().url('URL de tour 360 inválida').optional(),
   
   // Estado y clasificación
-  property_status: z.string().default('active'),
-  tags: z.array(z.string()).default([]),
+  property_status: z.enum(['new', 'used', 'renovated'], {
+    message: 'Selecciona un estado de propiedad válido'
+  }).default('new'),
+  tags: z.array(z.string().min(2, 'Tag muy corto').max(30, 'Tag muy largo')).default([]),
   featured: z.coerce.boolean().default(false),
   view_count: z.coerce.number().default(0),
   
@@ -81,7 +84,7 @@ const PropertySchema = z.object({
   agent_id: z.string().uuid().optional(),
   agency_id: z.string().uuid().optional(),
   
-  // Contact info (temporal, deberá moverse a sistema de usuarios)
+  // OBLIGATORIOS: Contacto esencial (temporal, deberá moverse a sistema de usuarios)
   contact_phone: z.string().min(10, 'Ingresa un teléfono válido'),
   contact_email: z.email('Ingresa un email válido'),
   notes: z.string().optional(),
@@ -108,8 +111,18 @@ export async function createPropertyAction(prevState: any, formData: FormData): 
     // Modern FormData parsing with 2025 best practices
     console.log('🔧 Server Action - Creating property with modern approach');
     
-    const rawData = Object.fromEntries(formData);
+    const rawData: Record<string, any> = Object.fromEntries(formData);
     console.log('🔧 Raw FormData:', rawData);
+
+    // Process tags field: convert comma-separated string to array
+    if (rawData.tags && typeof rawData.tags === 'string') {
+      rawData.tags = rawData.tags
+        .split(',')
+        .map((tag: string) => tag.trim())
+        .filter((tag: string) => tag.length > 0);
+    }
+
+    console.log('🔧 Processed FormData:', rawData);
 
     // Modern validation with Zod (server-side)
     const validatedData = PropertySchema.safeParse(rawData);

@@ -87,8 +87,9 @@ const BasicInformationSection = React.memo(function BasicInformationSection({
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-blue-600"/>
-                    Información Básica
+                    <CheckCircle className="w-5 h-5 text-red-500"/>
+                    Información Básica *
+                    <span className="text-sm text-red-500 font-normal ml-2">- Obligatorio</span>
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -116,6 +117,7 @@ const BasicInformationSection = React.memo(function BasicInformationSection({
                             id="type"
                             name="type"
                             required
+                            onChange={(e) => setPropertyType(e.target.value)}
                             className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                         >
                             <option value="">Selecciona el tipo</option>
@@ -199,6 +201,22 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
         errors: {},
     });
     const [isPending, startTransition] = useTransition();
+    const [propertyType, setPropertyType] = useState<string>('');
+
+    // Smart defaults based on property type
+    const getSmartDefaults = (type: string) => {
+        switch (type) {
+            case 'land':
+                return { bedrooms: 0, bathrooms: 0, parking_spaces: 0 };
+            case 'commercial':
+                return { bedrooms: 0, bathrooms: 1, parking_spaces: 3 };
+            case 'apartment':
+                return { bedrooms: 2, bathrooms: 2, parking_spaces: 1 };
+            case 'house':
+            default:
+                return { bedrooms: 3, bathrooms: 2, parking_spaces: 2 };
+        }
+    };
 
     // Modern Server Action wrapper
     const handleSubmit = async (formData: FormData) => {
@@ -218,6 +236,15 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
     return (
         <div className="space-y-6">
             <FormLoadingIndicator isPending={isPending}/>
+
+            {/* UX Optimization Banner */}
+            <Alert className="border-blue-200 bg-blue-50">
+                <CheckCircle className="h-4 w-4 text-blue-600"/>
+                <AlertDescription className="text-blue-800">
+                    <strong>✨ Formulario Optimizado:</strong> Solo 7 campos son obligatorios (marcados con *). 
+                    Los campos opcionales pueden completarse después para mejorar la publicación.
+                </AlertDescription>
+            </Alert>
 
             {/* Success Message */}
             {state.success && (
@@ -260,19 +287,19 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <CheckCircle className="w-5 h-5 text-blue-600"/>
-                            Ubicación
+                            <CheckCircle className="w-5 h-5 text-gray-500"/>
+                            Ubicación (Opcional)
+                            <span className="text-sm text-gray-500 font-normal ml-2">- Puede completarse después</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Province */}
                             <div>
-                                <Label htmlFor="province">Provincia *</Label>
+                                <Label htmlFor="province">Provincia (opcional)</Label>
                                 <select
                                     id="province"
                                     name="province"
-                                    required
                                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                                 >
                                     <option value="">Selecciona la provincia</option>
@@ -289,12 +316,11 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
 
                             {/* City */}
                             <div>
-                                <Label htmlFor="city">Ciudad *</Label>
+                                <Label htmlFor="city">Ciudad (opcional)</Label>
                                 <Input
                                     id="city"
                                     name="city"
                                     placeholder="Ej: Samborondón"
-                                    required
                                     minLength={2}
                                     className={state.errors?.city ? 'border-red-500' : ''}
                                 />
@@ -319,12 +345,11 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
 
                             {/* Address */}
                             <div className="col-span-full">
-                                <Label htmlFor="address">Dirección completa *</Label>
+                                <Label htmlFor="address">Dirección completa (opcional)</Label>
                                 <Input
                                     id="address"
                                     name="address"
                                     placeholder="Ej: Km 2.5 Vía Samborondón, Urbanización La Puntilla"
-                                    required
                                     minLength={10}
                                     className={state.errors?.address ? 'border-red-500' : ''}
                                 />
@@ -340,23 +365,32 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <CheckCircle className="w-5 h-5 text-blue-600"/>
-                            Características
+                            <CheckCircle className="w-5 h-5 text-gray-500"/>
+                            Características (Opcional)
+                            <span className="text-sm text-gray-500 font-normal ml-2">- Valores por defecto aplicados</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
+                        {propertyType && (
+                            <div className="mb-4 p-3 bg-gray-50 rounded-md">
+                                <p className="text-sm text-gray-700">
+                                    💡 <strong>Valores automáticos para {PROPERTY_TYPES.find(t => t.value === propertyType)?.label}:</strong>{' '}
+                                    Los campos se han ajustado con valores típicos para este tipo de propiedad.
+                                </p>
+                            </div>
+                        )}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {/* Bedrooms */}
                             <div>
-                                <Label htmlFor="bedrooms">Dormitorios *</Label>
+                                <Label htmlFor="bedrooms">Dormitorios</Label>
                                 <Input
                                     id="bedrooms"
                                     name="bedrooms"
                                     type="number"
                                     min="0"
                                     max="20"
-                                    defaultValue="3"
-                                    required
+                                    key={`bedrooms-${propertyType}`}
+                                    defaultValue={getSmartDefaults(propertyType).bedrooms.toString()}
                                     className={state.errors?.bedrooms ? 'border-red-500' : ''}
                                 />
                                 {state.errors?.bedrooms && (
@@ -366,7 +400,7 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
 
                             {/* Bathrooms */}
                             <div>
-                                <Label htmlFor="bathrooms">Baños *</Label>
+                                <Label htmlFor="bathrooms">Baños</Label>
                                 <Input
                                     id="bathrooms"
                                     name="bathrooms"
@@ -374,8 +408,8 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                                     min="0"
                                     max="20"
                                     step="0.5"
-                                    defaultValue="2"
-                                    required
+                                    key={`bathrooms-${propertyType}`}
+                                    defaultValue={getSmartDefaults(propertyType).bathrooms.toString()}
                                     className={state.errors?.bathrooms ? 'border-red-500' : ''}
                                 />
                                 {state.errors?.bathrooms && (
@@ -385,7 +419,7 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
 
                             {/* Area */}
                             <div>
-                                <Label htmlFor="area_m2">Área (m²) *</Label>
+                                <Label htmlFor="area_m2">Área (m²) (opcional)</Label>
                                 <Input
                                     id="area_m2"
                                     name="area_m2"
@@ -394,7 +428,6 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                                     max="10000"
                                     step="10"
                                     placeholder="320"
-                                    required
                                     className={state.errors?.area_m2 ? 'border-red-500' : ''}
                                 />
                                 {state.errors?.area_m2 && (
@@ -411,7 +444,8 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                                     type="number"
                                     min="0"
                                     max="20"
-                                    defaultValue="2"
+                                    key={`parking-${propertyType}`}
+                                    defaultValue={getSmartDefaults(propertyType).parking_spaces.toString()}
                                     className={state.errors?.parking_spaces ? 'border-red-500' : ''}
                                 />
                                 {state.errors?.parking_spaces && (
@@ -559,12 +593,79 @@ export function ModernPropertyForm2025({onSuccess, onCancel}: ModernPropertyForm
                     </CardContent>
                 </Card>
 
-                {/* Contact Information */}
+                {/* Estado y Clasificación */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <CheckCircle className="w-5 h-5 text-blue-600"/>
-                            Información de Contacto
+                            Estado y Clasificación
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Property Status */}
+                            <div>
+                                <Label htmlFor="property_status">Estado de la propiedad *</Label>
+                                <select
+                                    id="property_status"
+                                    name="property_status"
+                                    required
+                                    defaultValue="new"
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                                >
+                                    <option value="new">Nueva</option>
+                                    <option value="used">Usada</option>
+                                    <option value="renovated">Renovada</option>
+                                </select>
+                                {state.errors?.property_status && (
+                                    <p className="text-sm text-red-500 mt-1">{state.errors.property_status[0]}</p>
+                                )}
+                            </div>
+
+                            {/* Featured */}
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="featured"
+                                    name="featured"
+                                    value="true"
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <Label htmlFor="featured" className="text-sm font-normal">
+                                    ⭐ Propiedad destacada
+                                </Label>
+                                {state.errors?.featured && (
+                                    <p className="text-sm text-red-500 mt-1">{state.errors.featured[0]}</p>
+                                )}
+                            </div>
+
+                            {/* Tags */}
+                            <div className="col-span-full">
+                                <Label htmlFor="tags">Etiquetas/Tags</Label>
+                                <Input
+                                    id="tags"
+                                    name="tags"
+                                    placeholder="Ej: piscina, jardín, lujo, urbanización cerrada (separados por coma)"
+                                    className={state.errors?.tags ? 'border-red-500' : ''}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Separa las etiquetas con comas. Ejemplo: piscina, jardín, seguridad, lujo
+                                </p>
+                                {state.errors?.tags && (
+                                    <p className="text-sm text-red-500 mt-1">{state.errors.tags[0]}</p>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Contact Information */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-red-500"/>
+                            Información de Contacto *
+                            <span className="text-sm text-red-500 font-normal ml-2">- Obligatorio</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
